@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase Integration Test - Birla Sector 71</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .status { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        button { padding: 10px 20px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        #log { background: #f8f9fa; padding: 15px; border-radius: 5px; margin-top: 20px; font-family: monospace; white-space: pre-wrap; }
+    </style>
+</head>
+<body>
+    <h1>Firebase Integration Test</h1>
+    <p>Testing Firebase connection and data storage for Birla Sector 71 project.</p>
+    
+    <div id="status" class="status info">Initializing...</div>
+    
+    <div>
+        <button onclick="testFirebaseConnection()">Test Firebase Connection</button>
+        <button onclick="testDataCollection()">Test Data Collection</button>
+        <button onclick="clearLog()">Clear Log</button>
+    </div>
+    
+    <div id="log"></div>
+
+    <!-- Firebase SDK v8 -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    
+    <!-- Firebase Configuration -->
+    <script src="firebase-config.js"></script>
+    <script src="data-collector.js"></script>
+    
+    <script>
+        let logElement = document.getElementById('log');
+        let statusElement = document.getElementById('status');
+        
+        function log(message) {
+            const timestamp = new Date().toISOString();
+            logElement.textContent += `[${timestamp}] ${message}\n`;
+            console.log(message);
+        }
+        
+        function updateStatus(message, type = 'info') {
+            statusElement.textContent = message;
+            statusElement.className = `status ${type}`;
+        }
+        
+        function clearLog() {
+            logElement.textContent = '';
+        }
+        
+        async function testFirebaseConnection() {
+            log('Testing Firebase connection...');
+            updateStatus('Testing Firebase connection...', 'info');
+            
+            try {
+                if (typeof FirebaseConfig === 'undefined') {
+                    throw new Error('FirebaseConfig not loaded');
+                }
+                
+                const firebaseConfig = new FirebaseConfig();
+                const initialized = await firebaseConfig.initialize();
+                
+                if (initialized) {
+                    log('✅ Firebase initialized successfully');
+                    updateStatus('Firebase connected successfully!', 'success');
+                    
+                    // Test Firestore connection
+                    const db = firebaseConfig.getDatabase();
+                    log('✅ Firestore database instance obtained');
+                    
+                    // Test a simple write operation
+                    const testData = {
+                        test: true,
+                        timestamp: new Date().toISOString(),
+                        message: 'Firebase test from browser'
+                    };
+                    
+                    await db.collection('firebase_tests').add(testData);
+                    log('✅ Test data written to Firestore successfully');
+                    updateStatus('Firebase fully operational!', 'success');
+                    
+                } else {
+                    throw new Error('Firebase initialization failed');
+                }
+                
+            } catch (error) {
+                log(`❌ Firebase test failed: ${error.message}`);
+                updateStatus(`Firebase test failed: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testDataCollection() {
+            log('Testing data collection system...');
+            updateStatus('Testing data collection...', 'info');
+            
+            try {
+                if (typeof DataCollector === 'undefined') {
+                    throw new Error('DataCollector not loaded');
+                }
+                
+                const collector = new DataCollector();
+                await collector.initialize();
+                log('✅ DataCollector initialized');
+                
+                // Simulate visitor data
+                collector.visitorData = {
+                    name: 'Test User',
+                    phone: '9876543210',
+                    email: 'test@example.com',
+                    location: 'Gurugram',
+                    deviceType: 'desktop',
+                    source: 'firebase-test-page'
+                };
+                
+                await collector.saveVisitorData();
+                log('✅ Visitor data saved successfully');
+                updateStatus('Data collection working!', 'success');
+                
+            } catch (error) {
+                log(`❌ Data collection test failed: ${error.message}`);
+                updateStatus(`Data collection failed: ${error.message}`, 'error');
+            }
+        }
+        
+        // Auto-test on page load
+        window.addEventListener('load', function() {
+            log('Page loaded, starting auto-test...');
+            setTimeout(testFirebaseConnection, 1000);
+        });
+    </script>
+</body>
+</html>
+

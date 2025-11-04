@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Traffic Dashboard - Birla Sector 71</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            border-left: 4px solid #007bff;
+        }
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #007bff;
+        }
+        .stat-label {
+            color: #666;
+            margin-top: 5px;
+        }
+        .log-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .log-table th,
+        .log-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        .log-table th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+        .log-table tr:hover {
+            background-color: #f5f5f5;
+        }
+        .action-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+        .action-page_view { background-color: #e3f2fd; color: #1976d2; }
+        .action-form_submit { background-color: #e8f5e8; color: #2e7d32; }
+        .action-button_click { background-color: #fff3e0; color: #f57c00; }
+        .action-brochure_download { background-color: #fce4ec; color: #c2185b; }
+        .action-scroll_25, .action-scroll_50, .action-scroll_75, .action-scroll_100 { 
+            background-color: #f3e5f5; color: #7b1fa2; 
+        }
+        .refresh-btn {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+        .refresh-btn:hover {
+            background-color: #0056b3;
+        }
+        .no-data {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+            padding: 40px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Traffic Dashboard - Birla Sector 71</h1>
+        
+        <button class="refresh-btn" onclick="loadTrafficData()">🔄 Refresh Data</button>
+        
+        <div class="stats-grid" id="statsGrid">
+            <!-- Stats will be populated here -->
+        </div>
+        
+        <div id="logTableContainer">
+            <table class="log-table" id="logTable">
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>Action</th>
+                        <th>Page</th>
+                        <th>Device</th>
+                        <th>Browser</th>
+                        <th>IP Address</th>
+                    </tr>
+                </thead>
+                <tbody id="logTableBody">
+                    <!-- Log entries will be populated here -->
+                </tbody>
+            </table>
+        </div>
+        
+        <div id="noDataMessage" class="no-data" style="display: none;">
+            No traffic data available yet. Visit the main website to generate some data!
+        </div>
+    </div>
+
+    <script>
+        function loadTrafficData() {
+            fetch('traffic_logger.php')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        // Try to load the actual log file
+                        fetch('logs/traffic_log.json')
+                            .then(response => response.json())
+                            .then(logs => {
+                                displayTrafficData(logs);
+                            })
+                            .catch(error => {
+                                console.log('No log file found yet');
+                                document.getElementById('noDataMessage').style.display = 'block';
+                                document.getElementById('logTableContainer').style.display = 'none';
+                            });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading traffic data:', error);
+                    document.getElementById('noDataMessage').style.display = 'block';
+                    document.getElementById('logTableContainer').style.display = 'none';
+                });
+        }
+
+        function displayTrafficData(logs) {
+            if (!logs || logs.length === 0) {
+                document.getElementById('noDataMessage').style.display = 'block';
+                document.getElementById('logTableContainer').style.display = 'none';
+                return;
+            }
+
+            document.getElementById('noDataMessage').style.display = 'none';
+            document.getElementById('logTableContainer').style.display = 'block';
+
+            // Calculate statistics
+            const stats = calculateStats(logs);
+            displayStats(stats);
+
+            // Display log entries
+            displayLogEntries(logs);
+        }
+
+        function calculateStats(logs) {
+            const totalVisits = logs.length;
+            const uniqueIPs = new Set(logs.map(log => log.ip)).size;
+            const pageViews = logs.filter(log => log.action === 'page_view').length;
+            const formSubmissions = logs.filter(log => log.action === 'form_submit').length;
+            const buttonClicks = logs.filter(log => log.action === 'button_click').length;
+            const brochureDownloads = logs.filter(log => log.action === 'brochure_download').length;
+            
+            const deviceTypes = {};
+            const browsers = {};
+            
+            logs.forEach(log => {
+                deviceTypes[log.device_type] = (deviceTypes[log.device_type] || 0) + 1;
+                browsers[log.browser] = (browsers[log.browser] || 0) + 1;
+            });
+
+            return {
+                totalVisits,
+                uniqueIPs,
+                pageViews,
+                formSubmissions,
+                buttonClicks,
+                brochureDownloads,
+                deviceTypes,
+                browsers
+            };
+        }
+
+        function displayStats(stats) {
+            const statsGrid = document.getElementById('statsGrid');
+            statsGrid.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-number">${stats.totalVisits}</div>
+                    <div class="stat-label">Total Visits</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${stats.uniqueIPs}</div>
+                    <div class="stat-label">Unique Visitors</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${stats.pageViews}</div>
+                    <div class="stat-label">Page Views</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${stats.formSubmissions}</div>
+                    <div class="stat-label">Form Submissions</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${stats.buttonClicks}</div>
+                    <div class="stat-label">Button Clicks</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${stats.brochureDownloads}</div>
+                    <div class="stat-label">Brochure Downloads</div>
+                </div>
+            `;
+        }
+
+        function displayLogEntries(logs) {
+            const tbody = document.getElementById('logTableBody');
+            tbody.innerHTML = '';
+
+            // Show most recent entries first
+            const recentLogs = logs.slice(-50).reverse();
+
+            recentLogs.forEach(log => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${log.timestamp}</td>
+                    <td><span class="action-badge action-${log.action}">${log.action.replace('_', ' ').toUpperCase()}</span></td>
+                    <td>${log.page}</td>
+                    <td>${log.device_type}</td>
+                    <td>${log.browser}</td>
+                    <td>${log.ip}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Load data on page load
+        document.addEventListener('DOMContentLoaded', loadTrafficData);
+
+        // Auto-refresh every 30 seconds
+        setInterval(loadTrafficData, 30000);
+    </script>
+</body>
+</html>
+

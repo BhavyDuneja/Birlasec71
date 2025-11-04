@@ -1,0 +1,15 @@
+[build]
+  publish = "webclone/www.birlassector71.com/birla-estate-sector71-gurugram"
+  command = ""
+
+[[redirects]]
+  from = "/traffic_logger.php"
+  to = "/thank-you.html"
+  status = 200
+
+[[redirects]]
+  from = "/ipcheck.php"
+  to = "/index.html"
+  status = 200
+
+

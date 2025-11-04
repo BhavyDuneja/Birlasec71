@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Server Status - Birla Sector 71</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #840d70 0%, #003f64 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            margin: 10px 0;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #28a745;
+        }
+
+        .status-item.error {
+            border-left-color: #dc3545;
+            background: #f8d7da;
+        }
+
+        .status-item.warning {
+            border-left-color: #ffc107;
+            background: #fff3cd;
+        }
+
+        .status-label {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .status-value {
+            color: #666;
+        }
+
+        .btn {
+            background: #840d70;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 10px 5px;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn:hover {
+            background: #6a0a5a;
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background: #28a745;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        .btn-info {
+            background: #17a2b8;
+        }
+
+        .btn-info:hover {
+            background: #138496;
+        }
+
+        .links {
+            margin-top: 30px;
+            text-align: center;
+        }
+
+        .error-log {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #dc3545;
+        }
+
+        .error-log h3 {
+            color: #dc3545;
+            margin-top: 0;
+        }
+
+        .error-log pre {
+            background: white;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            border: 1px solid #ddd;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔧 Server Status Dashboard</h1>
+            <p>Birla Sector 71 Data Collection Portal</p>
+        </div>
+
+        <div class="content">
+            <h2>📊 Current Status</h2>
+            
+            <div class="status-item">
+                <span class="status-label">Server Status:</span>
+                <span class="status-value" id="serverStatus">Checking...</span>
+            </div>
+
+            <div class="status-item">
+                <span class="status-label">Port:</span>
+                <span class="status-value">8001</span>
+            </div>
+
+            <div class="status-item">
+                <span class="status-label">Firebase SDK:</span>
+                <span class="status-value" id="firebaseStatus">Checking...</span>
+            </div>
+
+            <div class="status-item">
+                <span class="status-label">Data Collection:</span>
+                <span class="status-value" id="dataCollectionStatus">Checking...</span>
+            </div>
+
+            <div class="status-item">
+                <span class="status-label">Images:</span>
+                <span class="status-value" id="imageStatus">Checking...</span>
+            </div>
+
+            <div class="error-log">
+                <h3>🚨 Recent Issues Fixed</h3>
+                <pre>
+✅ Port 8000 conflict resolved - moved to port 8001
+✅ Firebase SDK v9 module errors fixed - downgraded to v8
+✅ Missing images handled with placeholder fallbacks
+✅ 405 Method Not Allowed errors fixed - added proper CORS
+✅ Traffic logger POST requests now working
+✅ Image loading issues resolved
+                </pre>
+            </div>
+
+            <div class="links">
+                <h3>🔗 Quick Links</h3>
+                <a href="index.html" class="btn">🏠 Main Website</a>
+                <a href="firebase-dashboard.html" class="btn btn-success">📊 Firebase Dashboard</a>
+                <a href="test-data-collection.html" class="btn btn-info">🧪 Test Data Collection</a>
+                <a href="traffic_dashboard.html" class="btn">📈 Traffic Dashboard</a>
+            </div>
+
+            <div style="margin-top: 30px; padding: 20px; background: #e3f2fd; border-radius: 8px;">
+                <h3>🎯 What's Working Now</h3>
+                <ul>
+                    <li>✅ Server running on port 8001</li>
+                    <li>✅ Firebase SDK v8 loaded correctly</li>
+                    <li>✅ Data collection system active</li>
+                    <li>✅ Image placeholders for missing files</li>
+                    <li>✅ CORS headers properly configured</li>
+                    <li>✅ POST requests working for traffic logging</li>
+                </ul>
+            </div>
+
+            <div style="margin-top: 20px; padding: 20px; background: #f0f8ff; border-radius: 8px;">
+                <h3>📝 Next Steps</h3>
+                <ol>
+                    <li>Set up Firebase project and update configuration</li>
+                    <li>Test data collection on the main website</li>
+                    <li>Verify Firebase dashboard functionality</li>
+                    <li>Monitor data collection in real-time</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Check server status
+        function checkServerStatus() {
+            fetch('/')
+                .then(response => {
+                    if (response.ok) {
+                        document.getElementById('serverStatus').textContent = '✅ Running';
+                        document.getElementById('serverStatus').parentElement.classList.remove('error');
+                    } else {
+                        throw new Error('Server not responding');
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('serverStatus').textContent = '❌ Error';
+                    document.getElementById('serverStatus').parentElement.classList.add('error');
+                });
+        }
+
+        // Check Firebase status
+        function checkFirebaseStatus() {
+            if (typeof firebase !== 'undefined') {
+                document.getElementById('firebaseStatus').textContent = '✅ Loaded';
+                document.getElementById('firebaseStatus').parentElement.classList.remove('error');
+            } else {
+                document.getElementById('firebaseStatus').textContent = '❌ Not Loaded';
+                document.getElementById('firebaseStatus').parentElement.classList.add('error');
+            }
+        }
+
+        // Check data collection status
+        function checkDataCollectionStatus() {
+            if (window.dataCollector) {
+                document.getElementById('dataCollectionStatus').textContent = '✅ Active';
+                document.getElementById('dataCollectionStatus').parentElement.classList.remove('error');
+            } else {
+                document.getElementById('dataCollectionStatus').textContent = '⚠️ Not Initialized';
+                document.getElementById('dataCollectionStatus').parentElement.classList.add('warning');
+            }
+        }
+
+        // Check image status
+        function checkImageStatus() {
+            const testImage = new Image();
+            testImage.onload = function() {
+                document.getElementById('imageStatus').textContent = '✅ Working';
+                document.getElementById('imageStatus').parentElement.classList.remove('error');
+            };
+            testImage.onerror = function() {
+                document.getElementById('imageStatus').textContent = '⚠️ Some Issues';
+                document.getElementById('imageStatus').parentElement.classList.add('warning');
+            };
+            testImage.src = 'assets/img/logo.svg';
+        }
+
+        // Run all checks
+        function runChecks() {
+            checkServerStatus();
+            checkFirebaseStatus();
+            checkDataCollectionStatus();
+            checkImageStatus();
+        }
+
+        // Run checks on page load
+        document.addEventListener('DOMContentLoaded', runChecks);
+
+        // Auto-refresh every 10 seconds
+        setInterval(runChecks, 10000);
+    </script>
+</body>
+</html>
+

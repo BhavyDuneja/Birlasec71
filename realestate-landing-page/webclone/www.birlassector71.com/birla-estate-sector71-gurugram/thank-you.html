@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thank You - Birla Sector 71 Gurugram</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+        .thank-you-container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 60px 40px;
+            text-align: center;
+            max-width: 600px;
+            margin: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .success-icon {
+            font-size: 80px;
+            margin-bottom: 30px;
+            animation: bounce 2s infinite;
+        }
+        .thank-you-title {
+            font-size: 3em;
+            margin-bottom: 20px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        .thank-you-subtitle {
+            font-size: 1.3em;
+            margin-bottom: 30px;
+            opacity: 0.9;
+            line-height: 1.6;
+        }
+        .thank-you-message {
+            font-size: 1.1em;
+            margin-bottom: 40px;
+            opacity: 0.8;
+            line-height: 1.8;
+        }
+        .redirect-info {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 30px 0;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .countdown {
+            font-size: 2em;
+            font-weight: bold;
+            color: #ffd700;
+            margin: 20px 0;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 30px;
+        }
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        .btn-primary {
+            background: #ffd700;
+            color: #333;
+        }
+        .btn-primary:hover {
+            background: #ffed4e;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+        .contact-info {
+            margin-top: 40px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .contact-item {
+            margin: 10px 0;
+            font-size: 1.1em;
+        }
+        .contact-item strong {
+            color: #ffd700;
+        }
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
+        @media (max-width: 768px) {
+            .thank-you-container { padding: 40px 20px; }
+            .thank-you-title { font-size: 2.2em; }
+            .action-buttons { flex-direction: column; align-items: center; }
+            .btn { width: 100%; max-width: 300px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="thank-you-container">
+        <div class="success-icon">✅</div>
+        <h1 class="thank-you-title">Thank You!</h1>
+        <p class="thank-you-subtitle">Your inquiry has been received successfully</p>
+        
+        <div class="thank-you-message">
+            <p>Thank you for your interest in <strong>Birla Sector 71, Gurugram</strong>!</p>
+            <p>Our team will contact you within 24 hours to discuss your requirements and schedule a site visit.</p>
+        </div>
+
+        <div class="redirect-info">
+            <p>You will be automatically redirected to the main page in:</p>
+            <div class="countdown" id="countdown">5</div>
+            <p>seconds</p>
+        </div>
+
+        <div class="action-buttons">
+            <a href="index.html" class="btn btn-primary">🏠 Back to Home</a>
+            <a href="brochure.html" class="btn btn-secondary">📄 Download Brochure</a>
+        </div>
+
+        <div class="contact-info">
+            <h3 style="margin-bottom: 20px; color: #ffd700;">📞 Need Immediate Assistance?</h3>
+            <div class="contact-item">
+                <strong>Phone:</strong> +91 99999 96778
+            </div>
+            <div class="contact-item">
+                <strong>Email:</strong> info@birlassector71.com
+            </div>
+            <div class="contact-item">
+                <strong>Address:</strong> Sector 71, Gurugram, Haryana
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Countdown timer
+        let countdown = 5;
+        const countdownElement = document.getElementById('countdown');
+        
+        const timer = setInterval(() => {
+            countdown--;
+            countdownElement.textContent = countdown;
+            
+            if (countdown <= 0) {
+                clearInterval(timer);
+                // Redirect to main page
+                window.location.href = 'index.html';
+            }
+        }, 1000);
+
+        // Track thank you page visit
+        if (typeof window.dataCollector !== 'undefined') {
+            window.dataCollector.updateVisitorData({
+                source: 'thank-you-page',
+                pageType: 'confirmation',
+                timestamp: new Date().toISOString()
+            });
+        }
+
+        // Add some interactive effects
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('btn')) {
+                // Add click effect
+                e.target.style.transform = 'scale(0.95)';
+                setTimeout(() => {
+                    e.target.style.transform = '';
+                }, 150);
+            }
+        });
+
+        // Prevent accidental back navigation
+        window.addEventListener('beforeunload', function(e) {
+            if (countdown > 0) {
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        });
+    </script>
+</body>
+</html>

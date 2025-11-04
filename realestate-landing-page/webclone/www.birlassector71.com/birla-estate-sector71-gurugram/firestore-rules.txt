@@ -1,0 +1,49 @@
+// Firestore Security Rules for Birla Sector 71 Data Collection
+// Copy these rules to your Firebase Console > Firestore Database > Rules
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Allow read/write access to visitor data collection
+    match /birla_sector71_visitors/{document} {
+      allow read, write: if true; // For development - adjust for production
+    }
+    
+    // Allow read/write access to traffic logs
+    match /traffic_logs/{document} {
+      allow read, write: if true; // For development - adjust for production
+    }
+    
+    // Allow read/write access to form submissions
+    match /form_submissions/{document} {
+      allow read, write: if true; // For development - adjust for production
+    }
+  }
+}
+
+// Production Security Rules (use these for production):
+/*
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Visitor data - allow write only, read requires authentication
+    match /birla_sector71_visitors/{document} {
+      allow write: if true; // Allow data collection
+      allow read: if request.auth != null; // Require authentication to read
+    }
+    
+    // Traffic logs - allow write only, read requires authentication
+    match /traffic_logs/{document} {
+      allow write: if true; // Allow data collection
+      allow read: if request.auth != null; // Require authentication to read
+    }
+    
+    // Form submissions - allow write only, read requires authentication
+    match /form_submissions/{document} {
+      allow write: if true; // Allow data collection
+      allow read: if request.auth != null; // Require authentication to read
+    }
+  }
+}
+*/
+

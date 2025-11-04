@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Data Collection - Birla Sector 71</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #840d70 0%, #003f64 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #840d70;
+        }
+
+        .btn {
+            background: #840d70;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 10px 5px;
+        }
+
+        .btn:hover {
+            background: #6a0a5a;
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background: #28a745;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        .btn-info {
+            background: #17a2b8;
+        }
+
+        .btn-info:hover {
+            background: #138496;
+        }
+
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .data-display {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #840d70;
+        }
+
+        .data-display h3 {
+            margin-top: 0;
+            color: #840d70;
+        }
+
+        .data-display pre {
+            background: white;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            border: 1px solid #ddd;
+        }
+
+        .test-section {
+            margin: 30px 0;
+            padding: 20px;
+            border: 2px dashed #840d70;
+            border-radius: 10px;
+        }
+
+        .test-section h3 {
+            color: #840d70;
+            margin-top: 0;
+        }
+
+        .phone-links {
+            margin: 20px 0;
+        }
+
+        .phone-links a {
+            display: inline-block;
+            margin: 5px;
+            padding: 10px 15px;
+            background: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background 0.3s ease;
+        }
+
+        .phone-links a:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧪 Data Collection Test Page</h1>
+            <p>Test the Birla Sector 71 data collection system</p>
+        </div>
+
+        <div class="content">
+            <div id="statusMessage"></div>
+
+            <!-- Test Form -->
+            <div class="test-section">
+                <h3>📝 Test Form Submission</h3>
+                <p>Fill out this form to test data collection:</p>
+                
+                <form id="testForm">
+                    <div class="form-group">
+                        <label for="name">Full Name:</label>
+                        <input type="text" id="name" name="name" placeholder="Enter your full name" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="phone">Phone Number:</label>
+                        <input type="tel" id="phone" name="phone" placeholder="Enter your phone number" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="email">Email Address:</label>
+                        <input type="email" id="email" name="email" placeholder="Enter your email address">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="message">Message:</label>
+                        <textarea id="message" name="message" rows="4" placeholder="Enter your message"></textarea>
+                    </div>
+                    
+                    <button type="submit" class="btn">Submit Form</button>
+                </form>
+            </div>
+
+            <!-- Phone Number Detection Test -->
+            <div class="test-section">
+                <h3>📞 Phone Number Detection Test</h3>
+                <p>Click on these phone numbers to test automatic detection:</p>
+                
+                <div class="phone-links">
+                    <a href="tel:+91 99999 96778" onclick="testPhoneDetection('+91 99999 96778')">+91 99999 96778</a>
+                    <a href="tel:+9199999 96778" onclick="testPhoneDetection('+9199999 96778')">+91 98765 43211</a>
+                    <a href="tel:+9199999 96778" onclick="testPhoneDetection('+9199999 96778')">+91 98765 43212</a>
+                </div>
+            </div>
+
+            <!-- Location Test -->
+            <div class="test-section">
+                <h3>📍 Location Detection Test</h3>
+                <p>Test location data collection:</p>
+                <button class="btn btn-info" onclick="testLocationDetection()">Get My Location</button>
+                <div id="locationResult"></div>
+            </div>
+
+            <!-- Behavior Tracking Test -->
+            <div class="test-section">
+                <h3>📊 Behavior Tracking Test</h3>
+                <p>Test various tracking features:</p>
+                <button class="btn btn-success" onclick="testButtonClick()">Test Button Click</button>
+                <button class="btn btn-info" onclick="testScrollTracking()">Test Scroll Tracking</button>
+                <button class="btn" onclick="testTimeTracking()">Test Time Tracking</button>
+            </div>
+
+            <!-- Data Display -->
+            <div class="data-display">
+                <h3>📋 Collected Data</h3>
+                <p>Current visitor data:</p>
+                <pre id="collectedData">Loading...</pre>
+                <button class="btn btn-info" onclick="refreshData()">Refresh Data</button>
+            </div>
+
+            <!-- Navigation -->
+            <div style="text-align: center; margin-top: 30px;">
+                <a href="index.html" class="btn">🏠 Main Website</a>
+                <a href="firebase-dashboard.html" class="btn btn-success">📊 Firebase Dashboard</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK v8 (compatible with CDN) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+
+    <!-- Data Collection System -->
+    <script src="firebase-config.js"></script>
+    <script src="data-collector.js"></script>
+
+    <script>
+        // Test functions
+        function showStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('statusMessage');
+            statusDiv.innerHTML = `<div class="status ${type}">${message}</div>`;
+            setTimeout(() => {
+                statusDiv.innerHTML = '';
+            }, 5000);
+        }
+
+        function testPhoneDetection(phone) {
+            showStatus(`Phone number detected: ${phone}`, 'success');
+            // The data collector will automatically detect this
+        }
+
+        function testLocationDetection() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const location = {
+                            latitude: position.coords.latitude,
+                            longitude: position.coords.longitude,
+                            accuracy: position.coords.accuracy
+                        };
+                        document.getElementById('locationResult').innerHTML = 
+                            `<div class="status success">Location detected: ${location.latitude}, ${location.longitude}</div>`;
+                        showStatus('Location data collected successfully!', 'success');
+                    },
+                    (error) => {
+                        document.getElementById('locationResult').innerHTML = 
+                            `<div class="status error">Location access denied or unavailable</div>`;
+                        showStatus('Location access denied', 'error');
+                    }
+                );
+            } else {
+                showStatus('Geolocation not supported', 'error');
+            }
+        }
+
+        function testButtonClick() {
+            showStatus('Button click tracked!', 'success');
+        }
+
+        function testScrollTracking() {
+            showStatus('Scroll to test scroll depth tracking', 'info');
+        }
+
+        function testTimeTracking() {
+            showStatus('Time tracking started - stay on page to test', 'info');
+        }
+
+        function refreshData() {
+            if (window.dataCollector) {
+                const data = window.dataCollector.getVisitorData();
+                document.getElementById('collectedData').textContent = JSON.stringify(data, null, 2);
+                showStatus('Data refreshed!', 'success');
+            } else {
+                showStatus('Data collector not initialized', 'error');
+            }
+        }
+
+        // Form submission handler
+        document.getElementById('testForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const data = {};
+            
+            for (let [key, value] of formData.entries()) {
+                data[key] = value;
+            }
+            
+            showStatus('Form submitted successfully! Data collected.', 'success');
+            refreshData();
+        });
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            showStatus('Test page loaded. Data collection system is active.', 'info');
+            refreshData();
+        });
+    </script>
+</body>
+</html>
