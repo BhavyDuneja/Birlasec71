@@ -1,6 +1,8 @@
 {
   "buildCommand": "",
   "outputDirectory": "realestate-landing-page/webclone/www.birlassector71.com/birla-estate-sector71-gurugram",
+  "cleanUrls": false,
+  "trailingSlash": false,
   "rewrites": [
     {
       "source": "/traffic_logger.php",
@@ -9,6 +11,22 @@
     {
       "source": "/ipcheck.php",
       "destination": "/index.html"
+    },
+    {
+      "source": "/firebase-dashboard",
+      "destination": "/firebase-dashboard.html"
+    },
+    {
+      "source": "/traffic-dashboard",
+      "destination": "/traffic_dashboard.html"
+    },
+    {
+      "source": "/traffic_dashboard",
+      "destination": "/traffic_dashboard.html"
+    },
+    {
+      "source": "/(.*\\.html)",
+      "destination": "/$1"
     },
     {
       "source": "/(.*)",
