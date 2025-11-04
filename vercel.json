@@ -1,0 +1,29 @@
+{
+  "buildCommand": "",
+  "outputDirectory": "realestate-landing-page/webclone/www.birlassector71.com/birla-estate-sector71-gurugram",
+  "rewrites": [
+    {
+      "source": "/traffic_logger.php",
+      "destination": "/thank-you.html"
+    },
+    {
+      "source": "/ipcheck.php",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/$1"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        }
+      ]
+    }
+  ]
+}
