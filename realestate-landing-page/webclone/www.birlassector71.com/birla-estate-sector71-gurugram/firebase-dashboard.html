@@ -64,6 +64,9 @@
         <div style="text-align: center; margin: 20px 0;">
             <button class="refresh-btn" onclick="loadData()">🔄 Refresh Data</button>
             <button class="refresh-btn" onclick="exportCsv()">📥 Export CSV</button>
+            <div id="statusIndicator" style="display: inline-block; margin-left: 15px; padding: 8px 15px; background: #d4edda; color: #155724; border-radius: 5px; font-size: 0.9em;">
+                <span id="statusText">🟢 Real-time updates active</span>
+            </div>
         </div>
 
         <div class="data-section">
@@ -102,61 +105,196 @@
                 if (initialized) {
                     db = firebaseConfig.getDatabase();
                     console.log('Firebase initialized successfully');
+                    updateStatusIndicator('🟡 Connecting to Firebase...', '#fff3cd', '#856404');
                     loadData();
                 } else {
                     throw new Error('Firebase initialization failed');
                 }
             } catch (error) {
                 console.error('Firebase initialization error:', error);
+                updateStatusIndicator('🔴 Connection failed', '#f8d7da', '#721c24');
                 showError('Failed to connect to Firebase: ' + error.message);
             }
         }
 
+        let unsubscribeFunctions = [];
+
         async function loadData() {
             if (!db) {
+                updateStatusIndicator('🔴 Firebase not initialized', '#f8d7da', '#721c24');
                 showError('Firebase not initialized');
                 return;
             }
 
             try {
-                // Load all collections
-                await Promise.all([
-                    loadVisitors(),
-                    loadLeads(),
-                    loadTraffic()
-                ]);
-                
-                updateStats();
-                renderTables();
+                updateStatusIndicator('🟡 Refreshing data...', '#fff3cd', '#856404');
+                // Unsubscribe from previous listeners
+                unsubscribeFunctions.forEach(unsub => {
+                    if (unsub) unsub();
+                });
+                unsubscribeFunctions = [];
+
+                // Set up real-time listeners for all collections
+                setupRealtimeListeners();
                 
             } catch (error) {
                 console.error('Error loading data:', error);
+                updateStatusIndicator('🔴 Error loading data', '#f8d7da', '#721c24');
                 showError('Failed to load data: ' + error.message);
             }
         }
 
+        function setupRealtimeListeners() {
+            // Real-time listener for visitors
+            try {
+                const visitorsUnsub = db.collection('birla_sector71_visitors')
+                    .orderBy('timestamp', 'desc')
+                    .limit(50)
+                    .onSnapshot((snapshot) => {
+                        allData.visitors = snapshot.docs.map(doc => ({
+                            id: doc.id,
+                            ...doc.data()
+                        }));
+                        updateStats();
+                        console.log('Visitors updated:', allData.visitors.length);
+                    }, (error) => {
+                        console.error('Error loading visitors:', error);
+                        if (error.code === 'failed-precondition') {
+                            showError('Firestore index required. Please create an index for birla_sector71_visitors collection on timestamp field.');
+                        }
+                    });
+                unsubscribeFunctions.push(visitorsUnsub);
+            } catch (error) {
+                console.error('Error setting up visitors listener:', error);
+            }
+
+            // Real-time listener for form submissions (leads)
+            try {
+                let query = db.collection('form_submissions');
+                
+                // Try with orderBy first
+                const leadsUnsub = query
+                    .orderBy('timestamp', 'desc')
+                    .limit(50)
+                    .onSnapshot((snapshot) => {
+                        allData.leads = snapshot.docs.map(doc => ({
+                            id: doc.id,
+                            ...doc.data()
+                        }));
+                        // Sort by timestamp in memory as fallback
+                        allData.leads.sort((a, b) => {
+                            const timeA = a.timestamp ? new Date(a.timestamp).getTime() : 0;
+                            const timeB = b.timestamp ? new Date(b.timestamp).getTime() : 0;
+                            return timeB - timeA;
+                        });
+                        updateStats();
+                        renderTables();
+                        updateStatusIndicator('🟢 Real-time updates active', '#d4edda', '#155724');
+                        console.log('Form submissions updated:', allData.leads.length);
+                    }, (error) => {
+                        console.error('Error loading form submissions with orderBy:', error);
+                        if (error.code === 'failed-precondition') {
+                            console.warn('Index missing, trying without orderBy...');
+                            // Fallback: load without orderBy and sort in memory
+                            db.collection('form_submissions')
+                                .limit(100)
+                                .get()
+                                .then((snapshot) => {
+                                    allData.leads = snapshot.docs.map(doc => ({
+                                        id: doc.id,
+                                        ...doc.data()
+                                    }));
+                                    // Sort by timestamp in memory
+                                    allData.leads.sort((a, b) => {
+                                        const timeA = a.timestamp ? new Date(a.timestamp).getTime() : 0;
+                                        const timeB = b.timestamp ? new Date(b.timestamp).getTime() : 0;
+                                        return timeB - timeA;
+                                    });
+                                    // Keep only latest 50
+                                    allData.leads = allData.leads.slice(0, 50);
+                                    updateStats();
+                                    renderTables();
+                                    console.log('Form submissions loaded (fallback):', allData.leads.length);
+                                    showError('Note: Firestore index recommended for better performance. Loading data without sorting index.');
+                                })
+                                .catch((fallbackError) => {
+                                    console.error('Fallback query also failed:', fallbackError);
+                                    updateStatusIndicator('🔴 Error loading data', '#f8d7da', '#721c24');
+                                    showError('Error loading form submissions: ' + fallbackError.message);
+                                });
+                        } else {
+                            updateStatusIndicator('🔴 Error loading data', '#f8d7da', '#721c24');
+                            showError('Error loading form submissions: ' + error.message);
+                        }
+                    });
+                unsubscribeFunctions.push(leadsUnsub);
+            } catch (error) {
+                console.error('Error setting up leads listener:', error);
+                showError('Error setting up form submissions listener: ' + error.message);
+            }
+
+            // Real-time listener for traffic logs
+            try {
+                const trafficUnsub = db.collection('traffic_logs')
+                    .orderBy('timestamp', 'desc')
+                    .limit(50)
+                    .onSnapshot((snapshot) => {
+                        allData.traffic = snapshot.docs.map(doc => ({
+                            id: doc.id,
+                            ...doc.data()
+                        }));
+                        updateStats();
+                        console.log('Traffic logs updated:', allData.traffic.length);
+                    }, (error) => {
+                        console.error('Error loading traffic logs:', error);
+                        if (error.code === 'failed-precondition') {
+                            console.warn('Firestore index required for traffic_logs');
+                        }
+                    });
+                unsubscribeFunctions.push(trafficUnsub);
+            } catch (error) {
+                console.error('Error setting up traffic listener:', error);
+            }
+        }
+
+        // Legacy functions for backward compatibility (not used with real-time listeners)
         async function loadVisitors() {
-            const snapshot = await db.collection('birla_sector71_visitors').orderBy('timestamp', 'desc').limit(50).get();
-            allData.visitors = snapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
-            }));
+            try {
+                const snapshot = await db.collection('birla_sector71_visitors').orderBy('timestamp', 'desc').limit(50).get();
+                allData.visitors = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+            } catch (error) {
+                console.error('Error loading visitors:', error);
+                throw error;
+            }
         }
 
         async function loadLeads() {
-            const snapshot = await db.collection('form_submissions').orderBy('timestamp', 'desc').limit(50).get();
-            allData.leads = snapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
-            }));
+            try {
+                const snapshot = await db.collection('form_submissions').orderBy('timestamp', 'desc').limit(50).get();
+                allData.leads = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+            } catch (error) {
+                console.error('Error loading form submissions:', error);
+                throw error;
+            }
         }
 
         async function loadTraffic() {
-            const snapshot = await db.collection('traffic_logs').orderBy('timestamp', 'desc').limit(50).get();
-            allData.traffic = snapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
-            }));
+            try {
+                const snapshot = await db.collection('traffic_logs').orderBy('timestamp', 'desc').limit(50).get();
+                allData.traffic = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+            } catch (error) {
+                console.error('Error loading traffic logs:', error);
+                throw error;
+            }
         }
 
         function updateStats() {
@@ -243,10 +381,29 @@
         }
 
         function showError(message) {
+            // Remove existing error messages
+            const existingErrors = document.querySelectorAll('.error');
+            existingErrors.forEach(err => err.remove());
+            
             const errorDiv = document.createElement('div');
             errorDiv.className = 'error';
             errorDiv.textContent = message;
-            document.querySelector('.container').insertBefore(errorDiv, document.querySelector('.stats-grid'));
+            const container = document.querySelector('.container');
+            if (container && container.querySelector('.stats-grid')) {
+                container.insertBefore(errorDiv, container.querySelector('.stats-grid'));
+            } else {
+                container.appendChild(errorDiv);
+            }
+        }
+
+        function updateStatusIndicator(text, bgColor, textColor) {
+            const indicator = document.getElementById('statusIndicator');
+            const statusText = document.getElementById('statusText');
+            if (indicator && statusText) {
+                indicator.style.background = bgColor || '#d4edda';
+                indicator.style.color = textColor || '#155724';
+                statusText.textContent = text || '🟢 Real-time updates active';
+            }
         }
 
         function exportCsv() {
