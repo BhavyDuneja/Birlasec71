@@ -29,15 +29,15 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         <meta name="keywords" content=""/>
         <link rel="canonical" href="index.html" />
         <meta property="og:title" content="Birla Sector 71 - 3 & 3.5 BHK Luxury Apartments in Gurugram " />
-        <meta property="og:type" content="https://www.birlassector71.com/birla-estate-sector71-gurugram/" />
-        <meta property="og:url" content="https://www.birlassector71.com/birla-estate-sector71-gurugram/" />
+        <meta property="og:type" content="https://birlasec71.in/" />
+        <meta property="og:url" content="https://birlasec71.in/" />
         <meta property="og:image" content="./assets/img/desktb1.webp" />
         <meta property="og:description" content=" Birla Sector 71 offering 3 & 3.5 BHK luxury apartments in Gurugram. Check property prices, floor plans & amenities.  " />
         <meta property="twitter:title" content="Birla Sector 71 - 3 & 3.5 BHK Luxury Apartments in Gurugram " />
         <meta property="twitter:description" content=" Birla Sector 71 offering 3 & 3.5 BHK luxury apartments in Gurugram. Check property prices, floor plans & amenities.  " />
         <meta property="twitter:card" content="summary_large_image" />
         <style>
-            :root {--colorPrimary: #840d70;--colorSecondary: #003f64; --colorBtn: #ffffff;--bgDesk: url('https://www.birlassector71.com/img/desktb1.webp');--bgMob: url('https://www.birlassector71.com/img/mobl.webp');
+            :root {--colorPrimary: #840d70;--colorSecondary: #003f64; --colorBtn: #ffffff;--bgDesk: url('https://birlasec71.in/img/desktb1.webp');--bgMob: url('https://birlasec71.in/img/mobl.webp');
 }
             @font-face { font-family: 'Roboto'; src: url('assets/fonts/Roboto-Regular.woff2') format('woff2'); font-weight: normal; }
             @font-face {font-family: 'Roboto'; src: url('assets/fonts/Roboto-Bold.woff2') format('woff2'); font-weight: bold; }
@@ -1199,7 +1199,7 @@ We are an authorised marketing partner for this project. Provided content is giv
        
     <script>
         var c, a = window.location.pathname,
-d = a.substring(a.lastIndexOf("https://www.birlassector71.com/") + 1);
+d = a.substring(a.lastIndexOf("https://birlasec71.in/") + 1);
 if (d !== "thank-you.html") {
     
     function addEvent(obj, evt, fn) {
@@ -1263,7 +1263,7 @@ if (d !== "thank-you.html") {
 
 <script type="text/javascript">
     var chatbotApiInput = {
-        home_url: "https://www.birlassector71.com/birla-estate-sector71-gurugram/",
+        home_url: "https://birlasec71.in/",
         gclid: "",
         utm_source: "",
         utm_medium: "",
@@ -1303,108 +1303,46 @@ const fpPromise = import('https://fpjscdn.net/v3/rmevazJvk6HdBPJpRXuX')
      region: "ap"
    }))
   
+   // This function is no longer needed - data-collector.js handles everything
+   function proceedWithFormSubmission() {
+       // Form submission is now handled by data-collector.js
+       // This function is kept for backward compatibility but does nothing
+       console.log('Form submission handled by data-collector.js');
+   }
+
+   // Simplified form handler - data-collector.js handles the actual submission
    function bindFormSubmit() {
-   $('form#pardotForm').off('submit').on('submit', function (e) {
-       e.preventDefault();
-
-
-       var $form = $(this);
-       var $submitBtn = $form.find('button[type="submit"], input[type="submit"]');
-       var $errorSpan = $form.find('.errorMessage');
-
-
-       // Disable the submit button to prevent multiple clicks
-       $submitBtn.prop('disabled', true);
-
-
-       // Clear any previous error and timeout
-       $errorSpan.text('');
-       clearTimeout($errorSpan.data('timeoutId'));
-
-
-       $.ajax({
-           url: 'ipcheck.php',
-           type: 'GET',
-           dataType: 'json',
-           success: function (data) {
-               if (data.status) {
-                   // Get FingerprintJS visitorId
-                   fpPromise
-                       .then(fp => fp.get())
-                       .then(result => {
-                           const deviceId = result.visitorId || ('fallback-' + Date.now());
-
-
-                           // 1. Insert or update the hidden input
-                           let $deviceIdField = $form.find('input[name="device_id"]');
-                           if ($deviceIdField.length === 0) {
-                               $form.append('<input type="hidden" name="device_id" value="">');
-                               $deviceIdField = $form.find('input[name="device_id"]');
-                           }
-                           $deviceIdField.val(deviceId);
-
-
-                           console.log('Device ID:', deviceId);
-
-
-                           // 2. Submit the form safely
-                           $form.off('submit'); // remove handler to prevent recursion
-                           $form.submit();
-                       })
-                       .catch(err => {
-                           console.error('FingerprintJS error:', err);
-
-
-                           // fallback device ID if visitorId fails
-                           const deviceId = 'fallback-' + Date.now();
-
-
-                           let $deviceIdField = $form.find('input[name="device_id"]');
-                           if ($deviceIdField.length === 0) {
-                               $form.append('<input type="hidden" name="device_id" value="">');
-                               $deviceIdField = $form.find('input[name="device_id"]');
-                           }
-                           $deviceIdField.val(deviceId);
-
-
-                           // Submit the form anyway
-                           $form.off('submit');
-                           $form.submit();
-                       });
-               } else {
-                   $errorSpan.text(data.message);
-
-
-                   var timeoutId = setTimeout(function () {
-                       $errorSpan.fadeOut(400, function () {
-                           $(this).text('').show();
-                       });
-                   }, 5000);
-                   $errorSpan.data('timeoutId', timeoutId);
-
-
-                   // Re-enable the submit button for retry
-                   $submitBtn.prop('disabled', false);
-               }
-           },
-           error: function () {
-               $errorSpan.text('An unexpected error occurred.');
-
-
-               var timeoutId = setTimeout(function () {
-                   $errorSpan.fadeOut(400, function () {
-                       $(this).text('').show();
-                   });
-               }, 5000);
-               $errorSpan.data('timeoutId', timeoutId);
-
-
-               // Re-enable the submit button on error
-               $submitBtn.prop('disabled', false);
+       // Let data-collector.js handle form submissions
+       // This just adds device_id if needed (optional)
+       $('form#pardotForm').on('submit', function (e) {
+           var $form = $(this);
+           var $submitBtn = $form.find('button[type="submit"], input[type="submit"]');
+           
+           // Disable submit button to prevent double submission
+           $submitBtn.prop('disabled', true);
+           
+           // Add device_id if not present (optional, for tracking)
+           let $deviceIdField = $form.find('input[name="device_id"]');
+           if ($deviceIdField.length === 0) {
+               $form.append('<input type="hidden" name="device_id" value="">');
+               $deviceIdField = $form.find('input[name="device_id"]');
            }
+           if (!$deviceIdField.val()) {
+               // Try to get device ID, but don't block submission
+               fpPromise
+                   .then(fp => fp.get())
+                   .then(result => {
+                       $deviceIdField.val(result.visitorId || ('fallback-' + Date.now()));
+                   })
+                   .catch(() => {
+                       $deviceIdField.val('fallback-' + Date.now());
+                   });
+           }
+           
+           // data-collector.js will handle the rest (save to Firebase, redirect)
+           console.log('Form submit event - data-collector.js will handle submission');
        });
-   });
-}
+   }
 
 
 // Bind when document is ready

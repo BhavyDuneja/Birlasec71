@@ -64,9 +64,16 @@
         <div style="text-align: center; margin: 20px 0;">
             <button class="refresh-btn" onclick="loadData()">🔄 Refresh Data</button>
             <button class="refresh-btn" onclick="exportCsv()">📥 Export CSV</button>
+            <button class="refresh-btn" onclick="testConnection()" style="background: #17a2b8;">🔍 Test Connection</button>
+            <button class="refresh-btn" onclick="toggleDebug()" style="background: #6c757d;">🐛 Debug Info</button>
             <div id="statusIndicator" style="display: inline-block; margin-left: 15px; padding: 8px 15px; background: #d4edda; color: #155724; border-radius: 5px; font-size: 0.9em;">
                 <span id="statusText">🟢 Real-time updates active</span>
             </div>
+        </div>
+
+        <div id="debugPanel" style="display: none; background: #f8f9fa; padding: 15px; margin: 20px 0; border-radius: 5px; border: 1px solid #dee2e6;">
+            <h3 style="margin-bottom: 10px;">🐛 Debug Information</h3>
+            <div id="debugContent" style="font-family: monospace; font-size: 0.9em; white-space: pre-wrap; max-height: 300px; overflow-y: auto;"></div>
         </div>
 
         <div class="data-section">
@@ -137,6 +144,16 @@
                 // Set up real-time listeners for all collections
                 setupRealtimeListeners();
                 
+                // Set a timeout to update status if no data comes in
+                setTimeout(() => {
+                    const totalLeads = allData.leads.length;
+                    if (totalLeads === 0) {
+                        updateStatusIndicator('🟡 No data found', '#fff3cd', '#856404');
+                    } else {
+                        updateStatusIndicator(`🟢 Real-time active (${totalLeads} submissions)`, '#d4edda', '#155724');
+                    }
+                }, 3000);
+                
             } catch (error) {
                 console.error('Error loading data:', error);
                 updateStatusIndicator('🔴 Error loading data', '#f8d7da', '#721c24');
@@ -170,52 +187,111 @@
 
             // Real-time listener for form submissions (leads)
             try {
-                let query = db.collection('form_submissions');
+                console.log('Setting up form submissions listener...');
+                
+                // First, try a simple query without orderBy to check if data exists
+                db.collection('form_submissions')
+                    .limit(1)
+                    .get()
+                    .then((testSnapshot) => {
+                        console.log('Test query - Documents found:', testSnapshot.size);
+                        if (testSnapshot.size > 0) {
+                            console.log('Sample document:', testSnapshot.docs[0].data());
+                        }
+                    })
+                    .catch((testError) => {
+                        console.error('Test query error:', testError);
+                    });
                 
                 // Try with orderBy first
-                const leadsUnsub = query
+                const leadsUnsub = db.collection('form_submissions')
                     .orderBy('timestamp', 'desc')
                     .limit(50)
                     .onSnapshot((snapshot) => {
-                        allData.leads = snapshot.docs.map(doc => ({
-                            id: doc.id,
-                            ...doc.data()
-                        }));
+                        console.log('Form submissions snapshot received. Size:', snapshot.size);
+                        console.log('Snapshot metadata:', {
+                            hasPendingWrites: snapshot.metadata.hasPendingWrites,
+                            fromCache: snapshot.metadata.fromCache
+                        });
+                        
+                        allData.leads = snapshot.docs.map(doc => {
+                            const data = doc.data();
+                            console.log('Document ID:', doc.id, 'Data:', data);
+                            return {
+                                id: doc.id,
+                                ...data
+                            };
+                        });
+                        
                         // Sort by timestamp in memory as fallback
                         allData.leads.sort((a, b) => {
                             const timeA = a.timestamp ? new Date(a.timestamp).getTime() : 0;
                             const timeB = b.timestamp ? new Date(b.timestamp).getTime() : 0;
                             return timeB - timeA;
                         });
+                        
+                        console.log('Total leads after processing:', allData.leads.length);
                         updateStats();
                         renderTables();
-                        updateStatusIndicator('🟢 Real-time updates active', '#d4edda', '#155724');
-                        console.log('Form submissions updated:', allData.leads.length);
+                        updateStatusIndicator(`🟢 Real-time updates active (${allData.leads.length} submissions)`, '#d4edda', '#155724');
                     }, (error) => {
                         console.error('Error loading form submissions with orderBy:', error);
+                        console.error('Error code:', error.code);
+                        console.error('Error message:', error.message);
+                        
                         if (error.code === 'failed-precondition') {
                             console.warn('Index missing, trying without orderBy...');
+                            updateStatusIndicator('🟡 Loading without index...', '#fff3cd', '#856404');
+                            
                             // Fallback: load without orderBy and sort in memory
                             db.collection('form_submissions')
                                 .limit(100)
                                 .get()
                                 .then((snapshot) => {
-                                    allData.leads = snapshot.docs.map(doc => ({
-                                        id: doc.id,
-                                        ...doc.data()
-                                    }));
+                                    console.log('Fallback query - Documents found:', snapshot.size);
+                                    allData.leads = snapshot.docs.map(doc => {
+                                        const data = doc.data();
+                                        console.log('Fallback - Document ID:', doc.id, 'Data:', data);
+                                        return {
+                                            id: doc.id,
+                                            ...data
+                                        };
+                                    });
+                                    
                                     // Sort by timestamp in memory
                                     allData.leads.sort((a, b) => {
                                         const timeA = a.timestamp ? new Date(a.timestamp).getTime() : 0;
                                         const timeB = b.timestamp ? new Date(b.timestamp).getTime() : 0;
                                         return timeB - timeA;
                                     });
+                                    
                                     // Keep only latest 50
                                     allData.leads = allData.leads.slice(0, 50);
+                                    console.log('Total leads after fallback processing:', allData.leads.length);
                                     updateStats();
                                     renderTables();
-                                    console.log('Form submissions loaded (fallback):', allData.leads.length);
-                                    showError('Note: Firestore index recommended for better performance. Loading data without sorting index.');
+                                    updateStatusIndicator(`🟢 Loaded ${allData.leads.length} submissions (no index)`, '#d4edda', '#155724');
+                                    
+                                    // Set up real-time listener without orderBy
+                                    const fallbackUnsub = db.collection('form_submissions')
+                                        .limit(100)
+                                        .onSnapshot((realtimeSnapshot) => {
+                                            console.log('Real-time fallback - Documents:', realtimeSnapshot.size);
+                                            allData.leads = realtimeSnapshot.docs.map(doc => ({
+                                                id: doc.id,
+                                                ...doc.data()
+                                            }));
+                                            allData.leads.sort((a, b) => {
+                                                const timeA = a.timestamp ? new Date(a.timestamp).getTime() : 0;
+                                                const timeB = b.timestamp ? new Date(b.timestamp).getTime() : 0;
+                                                return timeB - timeA;
+                                            });
+                                            allData.leads = allData.leads.slice(0, 50);
+                                            updateStats();
+                                            renderTables();
+                                            updateStatusIndicator(`🟢 Real-time active (${allData.leads.length} submissions)`, '#d4edda', '#155724');
+                                        });
+                                    unsubscribeFunctions.push(fallbackUnsub);
                                 })
                                 .catch((fallbackError) => {
                                     console.error('Fallback query also failed:', fallbackError);
@@ -224,12 +300,13 @@
                                 });
                         } else {
                             updateStatusIndicator('🔴 Error loading data', '#f8d7da', '#721c24');
-                            showError('Error loading form submissions: ' + error.message);
+                            showError('Error loading form submissions: ' + error.message + ' (Code: ' + error.code + ')');
                         }
                     });
                 unsubscribeFunctions.push(leadsUnsub);
             } catch (error) {
                 console.error('Error setting up leads listener:', error);
+                updateStatusIndicator('🔴 Error setting up listener', '#f8d7da', '#721c24');
                 showError('Error setting up form submissions listener: ' + error.message);
             }
 
@@ -319,12 +396,28 @@
 
         function renderLeadsTable() {
             const container = document.getElementById('leadsTable');
+            console.log('Rendering leads table. Total leads:', allData.leads.length);
             
             if (allData.leads.length === 0) {
-                container.innerHTML = '<div class="loading">No form submissions found</div>';
+                container.innerHTML = '<div class="loading">No form submissions found. Check console for debugging info.</div>';
+                console.log('No leads to display. Checking Firebase connection...');
+                // Try a direct query to see if collection exists
+                if (db) {
+                    db.collection('form_submissions').limit(1).get()
+                        .then(snap => {
+                            console.log('Direct query result - Collection exists, documents:', snap.size);
+                            if (snap.size === 0) {
+                                console.log('Collection exists but is empty');
+                            }
+                        })
+                        .catch(err => {
+                            console.error('Direct query failed:', err);
+                        });
+                }
                 return;
             }
 
+            console.log('Rendering table with', allData.leads.length, 'leads');
             const table = `
                 <table class="data-table">
                     <thead>
@@ -332,27 +425,129 @@
                             <th>Name</th>
                             <th>Phone</th>
                             <th>Email</th>
+                            <th>Form Type</th>
                             <th>Date</th>
                             <th>Time</th>
                             <th>Source</th>
                         </tr>
                     </thead>
                     <tbody>
-                        ${allData.leads.map(lead => `
+                        ${allData.leads.map(lead => {
+                            console.log('Rendering lead:', lead);
+                            const formType = lead.formType || 'general';
+                            const formTypeBadge = formType === 'brochure' ? '📄 Brochure' : 
+                                                  formType === 'chat' ? '💬 Chat' : 
+                                                  formType === 'call_back' ? '📞 Call Back' : 
+                                                  '📝 General';
+                            return `
                             <tr>
-                                <td>${lead.name || 'N/A'}</td>
-                                <td><span class="phone-number">${lead.phone || 'N/A'}</span></td>
-                                <td>${lead.email || 'N/A'}</td>
+                                <td>${escapeHtml(lead.name || 'N/A')}</td>
+                                <td><span class="phone-number">${escapeHtml(lead.phone || 'N/A')}</span></td>
+                                <td>${escapeHtml(lead.email || 'N/A')}</td>
+                                <td>${formTypeBadge}</td>
                                 <td class="timestamp">${formatDate(lead.timestamp)}</td>
                                 <td class="timestamp">${formatTime(lead.timestamp)}</td>
-                                <td>${lead.source || 'N/A'}</td>
+                                <td>${escapeHtml(lead.source || 'N/A')}</td>
                             </tr>
-                        `).join('')}
+                        `;
+                        }).join('')}
                     </tbody>
                 </table>
             `;
             
             container.innerHTML = table;
+        }
+
+        function escapeHtml(text) {
+            if (!text) return 'N/A';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        async function testConnection() {
+            if (!db) {
+                alert('Firebase not initialized');
+                return;
+            }
+
+            const debugContent = document.getElementById('debugContent');
+            if (debugContent) {
+                debugContent.textContent = 'Testing connection...\n';
+            }
+
+            try {
+                // Test 1: Check if collection exists and get count
+                const testSnapshot = await db.collection('form_submissions').limit(10).get();
+                let debugInfo = `✅ Connection Test Results:\n\n`;
+                debugInfo += `Collection: form_submissions\n`;
+                debugInfo += `Documents found: ${testSnapshot.size}\n\n`;
+
+                if (testSnapshot.size > 0) {
+                    debugInfo += `Sample Documents:\n`;
+                    testSnapshot.docs.forEach((doc, index) => {
+                        const data = doc.data();
+                        debugInfo += `\nDocument ${index + 1} (ID: ${doc.id}):\n`;
+                        debugInfo += `  - Name: ${data.name || 'N/A'}\n`;
+                        debugInfo += `  - Phone: ${data.phone || 'N/A'}\n`;
+                        debugInfo += `  - Email: ${data.email || 'N/A'}\n`;
+                        debugInfo += `  - Timestamp: ${data.timestamp || 'N/A'}\n`;
+                        debugInfo += `  - Source: ${data.source || 'N/A'}\n`;
+                        debugInfo += `  - All fields: ${JSON.stringify(data, null, 2)}\n`;
+                    });
+                } else {
+                    debugInfo += `\n⚠️ Collection exists but is empty.\n`;
+                    debugInfo += `Check if data is being saved to Firebase.\n`;
+                }
+
+                // Test 2: Try query with orderBy
+                try {
+                    const orderedSnapshot = await db.collection('form_submissions')
+                        .orderBy('timestamp', 'desc')
+                        .limit(5)
+                        .get();
+                    debugInfo += `\n✅ OrderBy query works: ${orderedSnapshot.size} documents\n`;
+                } catch (orderError) {
+                    debugInfo += `\n❌ OrderBy query failed: ${orderError.code} - ${orderError.message}\n`;
+                    if (orderError.code === 'failed-precondition') {
+                        debugInfo += `   → Firestore index required!\n`;
+                    }
+                }
+
+                if (debugContent) {
+                    debugContent.textContent = debugInfo;
+                }
+                
+                // Show debug panel
+                document.getElementById('debugPanel').style.display = 'block';
+                
+                console.log('Connection test complete:', debugInfo);
+            } catch (error) {
+                const errorMsg = `❌ Connection test failed: ${error.message}\nCode: ${error.code}`;
+                if (debugContent) {
+                    debugContent.textContent = errorMsg;
+                }
+                console.error('Connection test error:', error);
+                alert('Connection test failed. Check console for details.');
+            }
+        }
+
+        function toggleDebug() {
+            const panel = document.getElementById('debugPanel');
+            if (panel.style.display === 'none') {
+                panel.style.display = 'block';
+                const debugInfo = `Current State:\n\n`;
+                const info = debugInfo +
+                    `Total Leads in Memory: ${allData.leads.length}\n` +
+                    `Total Visitors: ${allData.visitors.length}\n` +
+                    `Total Traffic Logs: ${allData.traffic.length}\n` +
+                    `Firebase DB: ${db ? 'Connected' : 'Not connected'}\n` +
+                    `Active Listeners: ${unsubscribeFunctions.length}\n\n` +
+                    `Recent Leads Data:\n${JSON.stringify(allData.leads.slice(0, 3), null, 2)}`;
+                document.getElementById('debugContent').textContent = info;
+            } else {
+                panel.style.display = 'none';
+            }
         }
 
         // Visitor table removed
@@ -407,13 +602,14 @@
         }
 
         function exportCsv() {
-            const rows = [['Name','Phone','Email','Date','Time','Source']];
+            const rows = [['Name','Phone','Email','Form Type','Date','Time','Source']];
             allData.leads.forEach(lead => {
                 const phone = lead.phone ? `="${lead.phone}"` : '';
                 rows.push([
                     lead.name || '',
                     phone,
                     lead.email || '',
+                    lead.formType || 'general',
                     formatDate(lead.timestamp) || '',
                     formatTime(lead.timestamp) || '',
                     lead.source || ''

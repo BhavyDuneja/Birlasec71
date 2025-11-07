@@ -60,42 +60,50 @@
         });
     }
     
-    // Track page view
+    // Track page view (exclude certain pages)
     function trackPageView() {
+        const currentPath = window.location.pathname.toLowerCase();
+        const excludedPages = [
+            '/firebase-dashboard.html',
+            '/traffic_dashboard.html',
+            '/firebase-test.html',
+            '/index.html',  // Exclude index.html from traffic counts
+            '/server-status.html',
+            '/thank-you.html'
+        ];
+        
+        const isExcluded = excludedPages.some(page => currentPath.includes(page));
+        if (isExcluded) {
+            console.log('Page excluded from traffic tracking:', currentPath);
+            return; // Don't track excluded pages
+        }
+        
         trackEvent('page_view', window.location.pathname);
     }
     
-    // Track form submissions
+    // Track form submissions (prevent duplicate handling)
     function trackFormSubmissions() {
         const forms = document.querySelectorAll('form');
         forms.forEach(form => {
+            // Check if form already has submit handler
+            if (form.dataset.trafficTrackerBound === 'true') {
+                return; // Already bound
+            }
+            form.dataset.trafficTrackerBound = 'true';
+            
             form.addEventListener('submit', function(e) {
                 try {
-                    // Always track the submit event
+                    // Only track the event, don't prevent default or handle submission
+                    // Let the main form handler (data-collector.js and index.html) handle submission
                     trackEvent('form_submit', window.location.pathname);
-
-                    // Avoid double-saving; data-collector.js already listens to submit
-
-                    // Force local handling to avoid external 404 redirects
-                    if (e && typeof e.preventDefault === 'function') e.preventDefault();
-
-                    const formData = new FormData(form);
-                    // Add page context
-                    formData.append('page', window.location.pathname);
-
-                    fetch('traffic_logger.php', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                        body: new URLSearchParams(Array.from(formData.entries())).toString()
-                    }).catch(() => {}).finally(() => {
-                        // Go to local thank you page; it returns to the project after 5s
-                        setTimeout(function(){ window.location.href = 'thank-you.html'; }, 200);
-                    });
+                    
+                    // Don't prevent default - let the actual form submission proceed
+                    // The form will be handled by the main form handler in index.html
                 } catch (err) {
-                    // Fallback: still navigate to thank-you locally
-                    window.location.href = 'thank-you.html';
+                    console.error('Error tracking form submission:', err);
+                    // Don't block form submission on tracking error
                 }
-            });
+            }, { passive: true }); // Use passive listener to not interfere
         });
     }
     
@@ -161,8 +169,20 @@
     
     // Initialize tracking when DOM is ready
     function initTracking() {
-        // Track initial page view
-        trackPageView();
+        // Prevent duplicate initialization
+        if (window.trafficTrackerInitialized) {
+            console.log('Traffic tracker already initialized, skipping');
+            return;
+        }
+        window.trafficTrackerInitialized = true;
+        
+        // Track initial page view (only if data-collector hasn't already tracked it)
+        // Add a small delay to avoid duplicate tracking with data-collector
+        setTimeout(() => {
+            if (!window.pageViewTrackedByDataCollector) {
+                trackPageView();
+            }
+        }, 500);
         
         // Set up event tracking
         trackFormSubmissions();

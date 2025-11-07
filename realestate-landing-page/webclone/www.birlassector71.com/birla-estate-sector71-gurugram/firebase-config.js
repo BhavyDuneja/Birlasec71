@@ -4,13 +4,13 @@
 class FirebaseConfig {
     constructor() {
         this.config = {
-            apiKey: "AIzaSyAzhjDSvhUtMKO6ZaONwLjfKveQGuZmqUA",
-            authDomain: "realestatetemp.firebaseapp.com",
-            projectId: "realestatetemp",
-            storageBucket: "realestatetemp.firebasestorage.app",
-            messagingSenderId: "79443195851",
-            appId: "1:79443195851:web:80a3cf4e2377e7b130e84e",
-            measurementId: "G-SCWNX8CK69"
+            apiKey: "AIzaSyClHvNT6jLUxs7ZwANuQ27VEfqMbCBf2_M",
+            authDomain: "birlasec71-b4831.firebaseapp.com",
+            projectId: "birlasec71-b4831",
+            storageBucket: "birlasec71-b4831.firebasestorage.app",
+            messagingSenderId: "824026476319",
+            appId: "1:824026476319:web:3be39b714b957e0cc38a2a",
+            measurementId: "G-0PN2CJXP4J"
         };
         
         this.isInitialized = false;

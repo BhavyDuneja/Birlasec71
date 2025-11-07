@@ -333,6 +333,13 @@ const server = http.createServer((req, res) => {
             handleFormSubmission(req, res);
             return;
         }
+        
+        // Also handle form submissions from external form action (catch 404s)
+        if (pathname.includes('lead-callback') && req.method === 'POST') {
+            console.log('Form submission caught from external URL, redirecting to thank-you');
+            handleFormSubmission(req, res);
+            return;
+        }
     
     // Serve static files
     let filePath = path.join(__dirname, pathname);
