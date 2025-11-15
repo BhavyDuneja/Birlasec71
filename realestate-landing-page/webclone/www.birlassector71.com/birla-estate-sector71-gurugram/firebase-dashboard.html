@@ -162,22 +162,46 @@
         }
 
         function setupRealtimeListeners() {
-            // Real-time listener for visitors
+            // Real-time listener for visitors - Load ALL visitors for accurate unique count
             try {
+                // First, try to get all visitors (no limit for accurate unique count)
                 const visitorsUnsub = db.collection('birla_sector71_visitors')
                     .orderBy('timestamp', 'desc')
-                    .limit(50)
                     .onSnapshot((snapshot) => {
                         allData.visitors = snapshot.docs.map(doc => ({
                             id: doc.id,
                             ...doc.data()
                         }));
                         updateStats();
-                        console.log('Visitors updated:', allData.visitors.length);
+                        console.log('Visitors updated:', allData.visitors.length, 'Total documents');
+                        console.log('Unique visitors:', calculateUniqueVisitors(allData.visitors));
                     }, (error) => {
                         console.error('Error loading visitors:', error);
                         if (error.code === 'failed-precondition') {
-                            showError('Firestore index required. Please create an index for birla_sector71_visitors collection on timestamp field.');
+                            console.warn('Index missing, trying without orderBy...');
+                            // Fallback: load without orderBy
+                            db.collection('birla_sector71_visitors')
+                                .get()
+                                .then((snapshot) => {
+                                    allData.visitors = snapshot.docs.map(doc => ({
+                                        id: doc.id,
+                                        ...doc.data()
+                                    }));
+                                    // Sort by timestamp in memory
+                                    allData.visitors.sort((a, b) => {
+                                        const timeA = a.timestamp ? new Date(a.timestamp).getTime() : 0;
+                                        const timeB = b.timestamp ? new Date(b.timestamp).getTime() : 0;
+                                        return timeB - timeA;
+                                    });
+                                    updateStats();
+                                    console.log('Visitors loaded (fallback):', allData.visitors.length);
+                                })
+                                .catch((fallbackError) => {
+                                    console.error('Fallback also failed:', fallbackError);
+                                    showError('Firestore index required. Please create an index for birla_sector71_visitors collection on timestamp field.');
+                                });
+                        } else {
+                            showError('Error loading visitors: ' + error.message);
                         }
                     });
                 unsubscribeFunctions.push(visitorsUnsub);
@@ -374,19 +398,54 @@
             }
         }
 
+        // Calculate unique visitors based on sessionId, device_id, or IP
+        function calculateUniqueVisitors(visitors) {
+            const uniqueSet = new Set();
+            visitors.forEach(visitor => {
+                // Try to use sessionId first (most reliable)
+                if (visitor.sessionId) {
+                    uniqueSet.add(visitor.sessionId);
+                } 
+                // Fallback to device_id if available
+                else if (visitor.device_id) {
+                    uniqueSet.add(visitor.device_id);
+                }
+                // Last resort: use IP + User Agent combination
+                else if (visitor.ip && visitor.userAgent) {
+                    uniqueSet.add(visitor.ip + '|' + visitor.userAgent);
+                }
+                // Final fallback: just IP
+                else if (visitor.ip) {
+                    uniqueSet.add(visitor.ip);
+                }
+            });
+            return uniqueSet.size;
+        }
+
         function updateStats() {
-            const totalVisitors = allData.visitors.length;
+            const totalDocuments = allData.visitors.length;
+            const uniqueVisitors = calculateUniqueVisitors(allData.visitors);
             const totalLeads = allData.leads.length;
             const today = new Date().toDateString();
             const todayVisitors = allData.visitors.filter(v => 
-                new Date(v.timestamp).toDateString() === today
-            ).length;
-            const conversionRate = totalVisitors > 0 ? ((totalLeads / totalVisitors) * 100).toFixed(1) : 0;
+                v.timestamp && new Date(v.timestamp).toDateString() === today
+            );
+            const uniqueTodayVisitors = calculateUniqueVisitors(todayVisitors);
+            const conversionRate = uniqueVisitors > 0 ? ((totalLeads / uniqueVisitors) * 100).toFixed(1) : 0;
 
-            document.getElementById('totalVisitors').textContent = totalVisitors;
+            // Display unique visitors, not total documents
+            document.getElementById('totalVisitors').textContent = uniqueVisitors;
             document.getElementById('totalLeads').textContent = totalLeads;
-            document.getElementById('todayVisitors').textContent = todayVisitors;
+            document.getElementById('todayVisitors').textContent = uniqueTodayVisitors;
             document.getElementById('conversionRate').textContent = conversionRate + '%';
+            
+            console.log('Stats updated:', {
+                totalDocuments,
+                uniqueVisitors,
+                uniqueTodayVisitors,
+                totalLeads,
+                conversionRate
+            });
         }
 
         function renderTables() {

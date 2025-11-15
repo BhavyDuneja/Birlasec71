@@ -70,6 +70,134 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             input#modal_my_mobile {width: 60%;}
             /*--for thank you page --*/
             .thankyou-text p {text-align: center !important;}
+            
+            /* Sticky Floating Button - Horizontally Centered, Vertically at Bottom */
+            .sticky-form-btn {
+                position: fixed !important;
+                bottom: 30px !important;
+                left: 50% !important;
+                transform: translateX(-50%) !important;
+                z-index: 100000 !important;
+                min-width: 200px;
+                height: 60px;
+                border-radius: 30px;
+                padding: 0 25px;
+                background: linear-gradient(-45deg, var(--colorPrimary), var(--colorSecondary), var(--colorPrimary), var(--colorSecondary));
+                background-size: 400% 400%;
+                animation: 3s infinite Gradient;
+                color: var(--colorBtn) !important;
+                border: none;
+                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+                cursor: pointer;
+                display: flex !important;
+                align-items: center;
+                justify-content: center;
+                font-size: 16px;
+                font-weight: bold;
+                transition: transform 0.3s ease;
+                visibility: visible !important;
+                opacity: 1 !important;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }
+            .sticky-form-btn:hover {
+                transform: translateX(-50%) scale(1.1) !important;
+                box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+            }
+            .sticky-form-btn:active {
+                transform: translateX(-50%) scale(0.95) !important;
+            }
+            @media only screen and (max-width: 768px) {
+                .sticky-form-btn {
+                    min-width: 180px;
+                    height: 50px;
+                    bottom: 20px !important;
+                    left: 50% !important;
+                    transform: translateX(-50%) !important;
+                    font-size: 14px;
+                    padding: 0 20px;
+                    z-index: 100000 !important;
+                }
+                .sticky-form-btn:hover {
+                    transform: translateX(-50%) scale(1.05) !important;
+                }
+                .sticky-form-btn:active {
+                    transform: translateX(-50%) scale(0.95) !important;
+                }
+            }
+            
+            /* Ensure chatbot doesn't overlay the button */
+            #chat-square, #chat-close, .chat-wrapper, .chat-pop-sm {
+                z-index: 9999 !important;
+            }
+            
+            /* Hide chatbot initially - only show when user clicks */
+            .chat-wrapper {
+                display: none !important;
+                opacity: 0 !important;
+                visibility: hidden !important;
+            }
+            .chat-wrapper.show,
+            .chat-wrapper:not([style*="display: none"]) {
+                /* Allow manual opening via click */
+            }
+            
+            /* Disable all site interactions when sticky modal is open */
+            body.modal-sticky-open {
+                overflow: hidden !important;
+                pointer-events: none !important;
+            }
+            body.modal-sticky-open #stickyFormModal,
+            body.modal-sticky-open #stickyFormBtn {
+                pointer-events: auto !important;
+            }
+            body.modal-sticky-open #chat-square,
+            body.modal-sticky-open #chat-square-small,
+            body.modal-sticky-open .chat-wrapper,
+            body.modal-sticky-open .chat-pop-sm,
+            body.modal-sticky-open form:not(#stickyForm),
+            body.modal-sticky-open .enqModal,
+            body.modal-sticky-open button:not(#stickyFormBtn):not(#stickyFormSubmit),
+            body.modal-sticky-open a:not(#stickyFormBtn),
+            body.modal-sticky-open .navbar,
+            body.modal-sticky-open .nav-link {
+                pointer-events: none !important;
+                opacity: 0.5 !important;
+                cursor: not-allowed !important;
+            }
+            
+            /* Non-dismissible Modal */
+            #stickyFormModal .modal-backdrop {
+                background-color: rgba(0, 0, 0, 0.5) !important;
+            }
+            #stickyFormModal .modal {
+                pointer-events: auto;
+            }
+            #stickyFormModal .close,
+            #stickyFormModal button.close,
+            #stickyFormModal .modal-header .close,
+            #stickyFormModal [data-dismiss="modal"] {
+                display: none !important;
+                visibility: hidden !important;
+            }
+            #stickyFormModal.modal {
+                z-index: 100000 !important;
+            }
+            #stickyFormModal .modal-backdrop {
+                z-index: 99999 !important;
+            }
+            #stickyFormModal .form-required-message {
+                color: #dc3545;
+                font-size: 14px;
+                margin-top: 5px;
+                display: none;
+            }
+            #stickyFormModal .form-control:invalid {
+                border-color: #dc3545;
+            }
+            #stickyFormModal .form-control:valid {
+                border-color: #28a745;
+            }
         </style>
         <!-- Small Chatbot -->
         
@@ -422,6 +550,84 @@ We are an authorised marketing partner for this project. Provided content is giv
      <!--exit modal 2 start -->
      <div class="modal fade lightbox2 abc"></div> 
     <!--exit modal 2 end -->
+    
+    <!-- Sticky Floating Button -->
+    <button type="button" class="sticky-form-btn" id="stickyFormBtn" title="Get Quote" style="display: flex !important; visibility: visible !important; opacity: 1 !important;">
+        GET QUOTE
+    </button>
+    
+    <!-- Sticky Form Modal (Non-dismissible) -->
+    <div class="modal fade" id="stickyFormModal" tabindex="-1" role="dialog" aria-labelledby="stickyFormModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header" style="background-color: var(--colorPrimary); color: var(--colorBtn);">
+                    <h5 class="modal-title" id="stickyFormModalLabel">Get Instant Call Back</h5>
+                </div>
+                <div class="modal-body">
+                    <p class="text-center mb-3">Please fill in your details to get an instant call back from our team.</p>
+                    <form id="stickyForm" action="https://microsite.fanmrealty.com/live/lead-callback-v25.php" method="post">
+                        <div class="form-group">
+                            <input type="text" 
+                                   id="stickyFormName" 
+                                   name="fname" 
+                                   class="form-control rounded-0 micro-form-field" 
+                                   placeholder="Name *" 
+                                   required 
+                                   minlength="2"
+                                   pattern="[A-Za-z\s]{2,}">
+                            <div class="form-required-message" id="stickyFormNameError">Please enter your name (minimum 2 characters)</div>
+                        </div>
+                        <div class="form-group">
+                            <select class="my_country_name form-control rounded-0 micro-form-field" 
+                                    aria-label="countryname" 
+                                    name="country_name" 
+                                    id="stickyFormCountry"
+                                    required>
+                                <option data-countrycode="IN" value="India" data-contry_code="91" selected>India (+91)</option>
+                                <option data-countrycode="US" value="United States" data-contry_code="1">United States (+1)</option>
+                                <option data-countrycode="GB" value="United Kingdom" data-contry_code="44">United Kingdom (+44)</option>
+                                <option data-countrycode="AE" value="United Arab Emirates" data-contry_code="971">United Arab Emirates (+971)</option>
+                            </select>
+                            <input type="hidden" value="91" name="country_code" id="stickyFormCountryCode">
+                        </div>
+                        <div class="form-group">
+                            <input type="tel" 
+                                   id="stickyFormPhone" 
+                                   name="modal_my_mobile2" 
+                                   class="form-control numeric rounded-0 micro-form-field" 
+                                   placeholder="Phone Number *" 
+                                   required 
+                                   pattern="[0-9]{10,15}"
+                                   minlength="10"
+                                   maxlength="15"
+                                   onkeyup="if (/\D/g.test(this.value)) this.value = this.value.replace(/\D/g,'')">
+                            <div class="form-required-message" id="stickyFormPhoneError">Please enter a valid phone number (10-15 digits)</div>
+                        </div>
+                        <div class="form-group">
+                            <input type="email" 
+                                   id="stickyFormEmail" 
+                                   name="email" 
+                                   class="form-control rounded-0 micro-form-field" 
+                                   placeholder="Email Address (Optional)"
+                                   formnovalidate>
+                        </div>
+                        <input type="hidden" id="stickyFormFirstName" name="first_name">
+                        <input type="hidden" id="stickyFormLastName" name="last_name">
+                        <input type="hidden" id="stickyFormBuilder" name="builder" value=" Birla Estates">
+                        <input type="hidden" id="stickyFormProject" name="project" value="Birla Sector 71 Gurgaon ">
+                        <input type="hidden" id="stickyFormLeadSource" name="lead_source" value="Microsite">
+                        <input type="hidden" name="ip" id="stickyFormIp" value="211.132.176.145">
+                        <input type="hidden" name="mobile" id="stickyFormMobile" class="mobileconcat">
+                        <input type="hidden" id="stickyFormEnquiredFor" name="enquiredfor" value="Get Instant Call Back Sticky Button">
+                        <input type="hidden" name="device_id" id="stickyFormDeviceId" value="">
+                        <button type="submit" class="btn btn-info micro-form-btn effetMoveGradient submitBtn w-100" id="stickyFormSubmit">
+                            Request Call Back
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
             <div class="micro-side text-center">
                 <div class="og-section pb-2">
                     <ul class="nav nav-fill og-block">
@@ -443,7 +649,7 @@ We are an authorised marketing partner for this project. Provided content is giv
                 <form action="https://microsite.fanmrealty.com/live/lead-callback-v25.php" method="post" class="form-side" id="pardotForm" class="pardotForm">
                     <input type="text" id="fname" placeholder="Name" name="fname" class="form-control rounded-0 micro-form-field" required>
                     <div class="error" id="name_error"></div>
-                    <input type="email" id="email" placeholder="Email Address(Optional)" name="email" class="form-control rounded-0 micro-form-field">
+                    <input type="email" id="email" placeholder="Email Address(Optional)" name="email" class="form-control rounded-0 micro-form-field" formnovalidate>
                     <div class="error" id="address_error"></div>
                     <select class="my_country_name form-control rounded-0 micro-form-field" aria-label="countryname" name="country_name">
                         <option data-countrycode="IN" value="India" data-contry_code="91">India (+91)</option>
@@ -748,7 +954,7 @@ We are an authorised marketing partner for this project. Provided content is giv
                                     <form action="https://microsite.fanmrealty.com/live/lead-callback-v25.php" method="post" class="form-side" id="pardotForm" class="pardotForm">
                                     <input type="text" id="fname" placeholder="Name" name="fname" class="form-control rounded-0 micro-form-field" required>
                                     <div class="error" id="name_error"></div>
-                                    <input type="email" id="email" placeholder="Email Address(Optional)" name="email" class="form-control rounded-0 micro-form-field">
+                                    <input type="email" id="email" placeholder="Email Address(Optional)" name="email" class="form-control rounded-0 micro-form-field" formnovalidate>
                                     <div class="error" id="address_error"></div>
                                     <select class="my_country_name form-control rounded-0 micro-form-field" aria-label="countryname" name="country_name">
                                <option data-countrycode="IN" value="India" data-contry_code="91">India (+91)</option>
@@ -1291,11 +1497,211 @@ if (d !== "thank-you.html") {
         ip: "211.132.176.145",
         imagepath :"/assets/img/chatbot/",
         leadcoversion: "hbpushleads",
-        desktoptimer: 10000,
-        mobiletimer: 10000,
+        desktoptimer: 0,  // Disabled - chatbot won't auto-open
+        mobiletimer: 0,   // Disabled - chatbot won't auto-open
         device: "Desktop",
     };
     var timer = 0;
+    
+    // Disable chatbot auto-open completely - AGGRESSIVE BLOCKING
+    window.chatbotAutoOpenDisabled = true;
+    
+    // Block chatbot auto-open BEFORE chatbot script loads
+    window.init_chatbot = function() {
+        console.log('Chatbot auto-open blocked');
+        return false;
+    };
+    
+    // Block chatOpen function
+    window.chatOpen = function() {
+        console.log('chatOpen blocked');
+        return false;
+    };
+    
+    // Block openSmallchatBox function
+    window.openSmallchatBox = function() {
+        console.log('openSmallchatBox blocked');
+        return false;
+    };
+    
+    // Override init_chatbot function to prevent auto-opening
+    $(document).ready(function() {
+        // Override the init_chatbot function after chatbot script loads
+        setTimeout(function() {
+            if (typeof window.init_chatbot !== 'undefined') {
+                window.originalInitChatbot = window.init_chatbot;
+                window.init_chatbot = function() {
+                    console.log('Chatbot auto-open disabled');
+                    return false;
+                };
+            }
+            
+            // Block chatOpen
+            if (typeof window.chatOpen !== 'undefined') {
+                window.originalChatOpen = window.chatOpen;
+                window.chatOpen = function() {
+                    console.log('chatOpen disabled');
+                    return false;
+                };
+            }
+            
+            // Block openSmallchatBox
+            if (typeof window.openSmallchatBox !== 'undefined') {
+                window.originalOpenSmallchatBox = window.openSmallchatBox;
+                window.openSmallchatBox = function() {
+                    console.log('openSmallchatBox disabled');
+                    return false;
+                };
+            }
+            
+            // Remove all scroll event listeners that might trigger chatbot
+            $(window).off('scroll');
+            $(document).off('scroll');
+            
+            // Block any setTimeout calls that might trigger chatbot
+            var originalSetTimeout = window.setTimeout;
+            window.setTimeout = function(func, delay) {
+                if (typeof func === 'function') {
+                    var funcStr = func.toString();
+                    // Block if function contains chatbot-related code
+                    if (funcStr.includes('init_chatbot') || 
+                        funcStr.includes('chatOpen') || 
+                        funcStr.includes('openSmallchatBox') ||
+                        funcStr.includes('chat-wrapper') ||
+                        funcStr.includes('chat-square') ||
+                        funcStr.includes('chat-pop-sm')) {
+                        console.log('Blocked chatbot setTimeout');
+                        return null; // Return null instead of timeout ID
+                    }
+                }
+                return originalSetTimeout.apply(this, arguments);
+            };
+            
+            // Intercept jQuery show/toggle methods for chatbot elements
+            if (typeof $ !== 'undefined') {
+                var originalShow = $.fn.show;
+                var originalToggle = $.fn.toggle;
+                var originalFadeIn = $.fn.fadeIn;
+                var originalAnimate = $.fn.animate;
+                
+                $.fn.show = function() {
+                    if (this.hasClass('chat-wrapper') || 
+                        this.hasClass('chat-pop-sm') ||
+                        this.attr('id') === 'chat-square' ||
+                        this.attr('id') === 'chat-square-small') {
+                        // Only allow if explicitly clicked by user
+                        if (!window.chatbotUserClicked) {
+                            console.log('Blocked chatbot show()');
+                            return this;
+                        }
+                    }
+                    return originalShow.apply(this, arguments);
+                };
+                
+                $.fn.toggle = function() {
+                    if (this.hasClass('chat-wrapper') || 
+                        this.hasClass('chat-pop-sm') ||
+                        this.attr('id') === 'chat-square' ||
+                        this.attr('id') === 'chat-square-small') {
+                        // Only allow if explicitly clicked by user
+                        if (!window.chatbotUserClicked) {
+                            console.log('Blocked chatbot toggle()');
+                            return this;
+                        }
+                    }
+                    return originalToggle.apply(this, arguments);
+                };
+                
+                $.fn.fadeIn = function() {
+                    if (this.hasClass('chat-wrapper') || 
+                        this.hasClass('chat-pop-sm')) {
+                        if (!window.chatbotUserClicked) {
+                            console.log('Blocked chatbot fadeIn()');
+                            return this;
+                        }
+                    }
+                    return originalFadeIn.apply(this, arguments);
+                };
+                
+                $.fn.animate = function() {
+                    if (this.hasClass('chat-wrapper') || 
+                        this.hasClass('chat-pop-sm')) {
+                        if (!window.chatbotUserClicked) {
+                            // Check if animating opacity/height to show
+                            var props = arguments[0];
+                            if (props && (props.opacity === 1 || props.height === 'auto' || props.height === '100%')) {
+                                console.log('Blocked chatbot animate()');
+                                return this;
+                            }
+                        }
+                    }
+                    return originalAnimate.apply(this, arguments);
+                };
+                
+                // Allow manual opening when user clicks chatbot button
+                $(document).on('click', '#chat-square, #chat-square-small, .chat-pop-sm, .openchat', function() {
+                    window.chatbotUserClicked = true;
+                    setTimeout(function() {
+                        window.chatbotUserClicked = false;
+                    }, 1000);
+                });
+            }
+            
+            // Use MutationObserver to prevent chatbot from being shown
+            var observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    if (mutation.type === 'attributes' || mutation.type === 'childList') {
+                        mutation.addedNodes.forEach(function(node) {
+                            if (node.nodeType === 1) { // Element node
+                                if (node.classList && (
+                                    node.classList.contains('chat-wrapper') ||
+                                    node.classList.contains('chat-pop-sm')
+                                )) {
+                                    if (!window.chatbotUserClicked) {
+                                        node.style.display = 'none !important';
+                                        node.style.opacity = '0 !important';
+                                        node.style.visibility = 'hidden !important';
+                                    }
+                                }
+                            }
+                        });
+                        
+                        // Check for style changes that show chatbot
+                        if (mutation.target && mutation.target.classList) {
+                            if (mutation.target.classList.contains('chat-wrapper') ||
+                                mutation.target.classList.contains('chat-pop-sm')) {
+                                if (!window.chatbotUserClicked) {
+                                    var style = window.getComputedStyle(mutation.target);
+                                    if (style.display !== 'none' && style.opacity !== '0') {
+                                        mutation.target.style.setProperty('display', 'none', 'important');
+                                        mutation.target.style.setProperty('opacity', '0', 'important');
+                                        mutation.target.style.setProperty('visibility', 'hidden', 'important');
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            });
+            
+            // Observe the body for chatbot elements
+            observer.observe(document.body, {
+                childList: true,
+                subtree: true,
+                attributes: true,
+                attributeFilter: ['style', 'class']
+            });
+            
+            // Force hide chatbot wrapper immediately
+            setTimeout(function() {
+                $('.chat-wrapper, .chat-pop-sm').css({
+                    'display': 'none !important',
+                    'opacity': '0 !important',
+                    'visibility': 'hidden !important'
+                });
+            }, 50);
+        }, 100);
+    });
 </script>    
 
 
@@ -1389,6 +1795,274 @@ $(document).ready(function() {
 <!-- Data Collection System -->
 <script src="firebase-config.js"></script>
 <script src="data-collector.js"></script>
+
+<!-- Sticky Form Modal Handler -->
+<script>
+(function() {
+    'use strict';
+    
+    // Initialize sticky form modal
+    $(document).ready(function() {
+        const $stickyBtn = $('#stickyFormBtn');
+        const $stickyModal = $('#stickyFormModal');
+        const $stickyForm = $('#stickyForm');
+        const $nameInput = $('#stickyFormName');
+        const $phoneInput = $('#stickyFormPhone');
+        const $countrySelect = $('#stickyFormCountry');
+        const $countryCode = $('#stickyFormCountryCode');
+        
+        // Open modal when button is clicked
+        $stickyBtn.on('click', function() {
+            // Disable all site interactions
+            $('body').addClass('modal-sticky-open');
+            
+            // Disable chatbot completely
+            if (typeof $ !== 'undefined') {
+                $('#chat-square, #chat-square-small, .chat-pop-sm, .openchat').off('click').css({
+                    'pointer-events': 'none',
+                    'opacity': '0.5',
+                    'cursor': 'not-allowed'
+                });
+                
+                // Hide chat wrapper if open
+                $('.chat-wrapper').hide();
+            }
+            
+            // Disable chat functionality globally
+            window.chatDisabled = true;
+            
+            // Disable all other forms
+            $('form:not(#stickyForm)').on('submit', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                alert('Please complete the call back form first.');
+                return false;
+            });
+            
+            // Disable all modal triggers
+            $('.enqModal, [data-toggle="modal"]').off('click').on('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                alert('Please complete the call back form first.');
+                return false;
+            });
+            
+            // Disable navigation links
+            $('.nav-link, a[href^="#"]').off('click').on('click', function(e) {
+                if (!$(this).hasClass('sticky-form-btn')) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return false;
+                }
+            });
+            
+            $stickyModal.modal({
+                backdrop: 'static',
+                keyboard: false,
+                show: true
+            });
+        });
+        
+        // Update country code when country changes
+        $countrySelect.on('change', function() {
+            const selectedOption = $(this).find('option:selected');
+            const countryCode = selectedOption.data('contry_code') || '91';
+            $countryCode.val(countryCode);
+        });
+        
+        // Initialize country code
+        $countrySelect.trigger('change');
+        
+        // Split name into first and last name
+        $nameInput.on('blur', function() {
+            const name = $(this).val().trim();
+            if (name) {
+                const nameParts = name.split(' ');
+                $('#stickyFormFirstName').val(nameParts[0] || '');
+                $('#stickyFormLastName').val(nameParts.slice(1).join(' ') || '');
+            }
+        });
+        
+        // Concatenate country code and phone
+        $phoneInput.on('blur', function() {
+            const phone = $(this).val();
+            const countryCode = $countryCode.val();
+            if (phone) {
+                $('#stickyFormMobile').val(countryCode + phone);
+            }
+        });
+        
+        // STRICTLY prevent modal from closing until form is submitted
+        $stickyModal.on('hide.bs.modal', function(e) {
+            // ONLY allow close if form was successfully submitted
+            if ($stickyForm.data('submitted') === true && $stickyForm.data('allowClose') === true) {
+                return; // Allow modal to close only after submission
+            }
+            
+            // PREVENT ALL CLOSING ATTEMPTS
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            
+            // Check if form is valid - show validation messages
+            if (!$stickyForm[0].checkValidity()) {
+                // Show validation messages
+                if (!$nameInput[0].validity.valid) {
+                    $('#stickyFormNameError').show();
+                    $nameInput.focus();
+                } else {
+                    $('#stickyFormNameError').hide();
+                }
+                
+                if (!$phoneInput[0].validity.valid) {
+                    $('#stickyFormPhoneError').show();
+                    if ($nameInput[0].validity.valid) {
+                        $phoneInput.focus();
+                    }
+                } else {
+                    $('#stickyFormPhoneError').hide();
+                }
+                
+                // Trigger HTML5 validation
+                $stickyForm[0].reportValidity();
+            } else {
+                // Form is valid but not submitted - show message
+                alert('Please submit the form to continue. The form must be submitted before you can close this window.');
+            }
+            
+            return false;
+        });
+        
+        // Also prevent backdrop clicks
+        $stickyModal.on('click', function(e) {
+            if ($(e.target).hasClass('modal') || $(e.target).hasClass('modal-backdrop')) {
+                if ($stickyForm.data('submitted') !== true) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    alert('Please fill and submit the form to continue.');
+                    return false;
+                }
+            }
+        });
+        
+        // Handle form submission - validate first, then let data-collector.js handle it
+        $stickyForm.on('submit', function(e) {
+            // Validate form before allowing submission
+            if (!$stickyForm[0].checkValidity()) {
+                e.preventDefault();
+                e.stopPropagation();
+                $stickyForm[0].reportValidity();
+                
+                // Show error messages
+                if (!$nameInput[0].validity.valid) {
+                    $('#stickyFormNameError').show();
+                } else {
+                    $('#stickyFormNameError').hide();
+                }
+                if (!$phoneInput[0].validity.valid) {
+                    $('#stickyFormPhoneError').show();
+                } else {
+                    $('#stickyFormPhoneError').hide();
+                }
+                return false;
+            }
+            
+            // Hide error messages
+            $('#stickyFormNameError').hide();
+            $('#stickyFormPhoneError').hide();
+            
+            // Disable submit button
+            const $submitBtn = $('#stickyFormSubmit');
+            $submitBtn.prop('disabled', true).text('Submitting...');
+            
+            // Mark form as submitted - this allows modal to close
+            $stickyForm.data('allowClose', true);
+            $stickyForm.data('submitted', true);
+            
+            // The form will be handled by data-collector.js's trackFormSubmission
+            // It will save to Firebase and redirect to thank-you.html
+            // Close modal after a short delay to allow data-collector to process
+            setTimeout(function() {
+                if ($stickyForm.data('submitted')) {
+                    $stickyModal.modal('hide');
+                }
+            }, 500);
+            
+            // Don't prevent default - let data-collector.js handle it
+            // But we've already validated, so it should proceed
+        });
+        
+        // Real-time validation feedback
+        $nameInput.on('input', function() {
+            if (this.validity.valid) {
+                $('#stickyFormNameError').hide();
+            }
+        });
+        
+        $phoneInput.on('input', function() {
+            if (this.validity.valid) {
+                $('#stickyFormPhoneError').hide();
+            }
+        });
+        
+        // STRICTLY prevent closing modal via ESC key
+        $(document).on('keydown', function(e) {
+            if (e.key === 'Escape' || e.keyCode === 27) {
+                if ($stickyModal.hasClass('show') || $stickyModal.hasClass('in')) {
+                    if ($stickyForm.data('submitted') !== true) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        e.stopImmediatePropagation();
+                        alert('Please submit the form to continue. Pressing ESC will not close this window.');
+                        return false;
+                    }
+                }
+            }
+        });
+        
+        // Additional prevention for any close attempts
+        $stickyModal.on('hidden.bs.modal', function(e) {
+            if ($stickyForm.data('submitted') !== true) {
+                // If modal was closed without submission, reopen it
+                $stickyModal.modal('show');
+            } else {
+                // Form was submitted - re-enable all site interactions
+                $('body').removeClass('modal-sticky-open');
+            }
+        });
+        
+        // Re-enable site when modal is successfully closed after submission
+        $stickyModal.on('hidden.bs.modal', function() {
+            if ($stickyForm.data('submitted') === true) {
+                // Re-enable all interactions
+                $('body').removeClass('modal-sticky-open');
+                
+                // Re-enable forms
+                $('form:not(#stickyForm)').off('submit.sticky-disable');
+                
+                // Re-enable modal triggers
+                $('.enqModal, [data-toggle="modal"]').off('click.sticky-disable');
+                
+                // Re-enable navigation
+                $('.nav-link, a[href^="#"]').off('click.sticky-disable');
+                
+                // Re-enable chatbot
+                $('#chat-square, #chat-square-small, .chat-pop-sm, .openchat').css({
+                    'pointer-events': 'auto',
+                    'opacity': '1',
+                    'cursor': 'pointer'
+                });
+                window.chatDisabled = false;
+            }
+        });
+        
+        // Also disable when modal is shown
+        $stickyModal.on('shown.bs.modal', function() {
+            $('body').addClass('modal-sticky-open');
+        });
+    });
+})();
+</script>
 </body>
 
 <!-- Mirrored from www.birlassector71.com/birla-estate-sector71-gurugram/ by HTTrack Website Copier/3.x [XR&CO'2014], Wed, 29 Oct 2025 23:55:59 GMT -->
