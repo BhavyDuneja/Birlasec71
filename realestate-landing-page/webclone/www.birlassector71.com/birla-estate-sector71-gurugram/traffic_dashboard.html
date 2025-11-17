@@ -77,6 +77,9 @@
         .action-scroll_25, .action-scroll_50, .action-scroll_75, .action-scroll_100 { 
             background-color: #f3e5f5; color: #7b1fa2; 
         }
+        .action-time_on_page {
+            background-color: #e0f2f1; color: #00695c;
+        }
         .refresh-btn {
             background-color: #007bff;
             color: white;
@@ -188,27 +191,65 @@
                     trafficUnsubscribe(); // Unsubscribe from previous listener
                 }
 
+                // Fetch without orderBy to avoid index requirement, then sort client-side
                 trafficUnsubscribe = db.collection('traffic_logs')
-                    .orderBy('timestamp', 'desc')
                     .limit(1000)
                     .onSnapshot((snapshot) => {
                         const logs = snapshot.docs.map(doc => ({
                             id: doc.id,
                             ...doc.data()
                         }));
+                        
+                        // Sort by timestamp descending (client-side)
+                        logs.sort((a, b) => {
+                            // Handle both string timestamps and Firestore timestamps
+                            const timeA = a.timestamp?.toDate ? a.timestamp.toDate().getTime() : 
+                                         (a.timestamp ? new Date(a.timestamp.replace(' ', 'T')).getTime() : 0);
+                            const timeB = b.timestamp?.toDate ? b.timestamp.toDate().getTime() : 
+                                         (b.timestamp ? new Date(b.timestamp.replace(' ', 'T')).getTime() : 0);
+                            return timeB - timeA; // Descending order
+                        });
+                        
+                        if (logs.length > 0) {
+                            console.log('Traffic logs loaded from Firestore:', logs.length, 'Sample:', logs[0]);
+                        } else {
+                            console.log('No traffic logs found in Firestore');
+                        }
                         displayTrafficData(logs);
-                        console.log('Traffic logs loaded from Firestore:', logs.length);
                     }, (error) => {
                         console.error('Error loading traffic logs from Firestore:', error);
-                        if (error.code === 'failed-precondition') {
-                            console.warn('Firestore index required for traffic_logs');
-                        }
-                        // Fallback to API
-                        loadFromAPI();
+                        // Try fallback without orderBy
+                        loadFromFirestoreFallback();
                     });
             } catch (error) {
                 console.error('Error setting up Firestore listener:', error);
                 // Fallback to API
+                loadFromAPI();
+            }
+        }
+
+        // Fallback method: fetch without real-time listener
+        async function loadFromFirestoreFallback() {
+            try {
+                const snapshot = await db.collection('traffic_logs').limit(1000).get();
+                const logs = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+                
+                // Sort by timestamp descending (client-side)
+                logs.sort((a, b) => {
+                    const timeA = a.timestamp?.toDate ? a.timestamp.toDate().getTime() : 
+                                 (a.timestamp ? new Date(a.timestamp.replace(' ', 'T')).getTime() : 0);
+                    const timeB = b.timestamp?.toDate ? b.timestamp.toDate().getTime() : 
+                                 (b.timestamp ? new Date(b.timestamp.replace(' ', 'T')).getTime() : 0);
+                    return timeB - timeA;
+                });
+                
+                displayTrafficData(logs);
+                console.log('Traffic logs loaded from Firestore (fallback):', logs.length);
+            } catch (error) {
+                console.error('Firestore fallback also failed:', error);
                 loadFromAPI();
             }
         }
@@ -238,17 +279,24 @@
         }
 
         function displayTrafficData(logs) {
+            console.log('Displaying traffic data, logs count:', logs ? logs.length : 0);
+            
             if (!logs || logs.length === 0) {
+                console.log('No logs to display, showing no data message');
                 document.getElementById('noDataMessage').style.display = 'block';
                 document.getElementById('logTableContainer').style.display = 'none';
+                // Clear stats
+                document.getElementById('statsGrid').innerHTML = '';
                 return;
             }
 
+            console.log('Displaying', logs.length, 'log entries');
             document.getElementById('noDataMessage').style.display = 'none';
             document.getElementById('logTableContainer').style.display = 'block';
 
             // Calculate statistics
             const stats = calculateStats(logs);
+            console.log('Calculated stats:', stats);
             displayStats(stats);
 
             // Display log entries
@@ -317,18 +365,30 @@
             const tbody = document.getElementById('logTableBody');
             tbody.innerHTML = '';
 
-            // Show most recent entries first
-            const recentLogs = logs.slice(-50).reverse();
+            // Logs are already sorted by timestamp descending, just take first 50
+            const recentLogs = logs.slice(0, 50);
 
             recentLogs.forEach(log => {
                 const row = document.createElement('tr');
+                // Format timestamp for display
+                let timestampDisplay = log.timestamp;
+                if (log.timestamp?.toDate) {
+                    timestampDisplay = log.timestamp.toDate().toLocaleString();
+                } else if (typeof log.timestamp === 'string') {
+                    timestampDisplay = log.timestamp;
+                }
+                
+                // Format action for display
+                const actionDisplay = log.action ? log.action.replace(/_/g, ' ').toUpperCase() : 'UNKNOWN';
+                const actionClass = log.action ? `action-${log.action}` : '';
+                
                 row.innerHTML = `
-                    <td>${log.timestamp}</td>
-                    <td><span class="action-badge action-${log.action}">${log.action.replace('_', ' ').toUpperCase()}</span></td>
-                    <td>${log.page}</td>
-                    <td>${log.device_type}</td>
-                    <td>${log.browser}</td>
-                    <td>${log.ip}</td>
+                    <td>${timestampDisplay}</td>
+                    <td><span class="action-badge ${actionClass}">${actionDisplay}</span></td>
+                    <td>${log.page || 'N/A'}</td>
+                    <td>${log.device_type || 'unknown'}</td>
+                    <td>${log.browser || 'unknown'}</td>
+                    <td>${log.ip || 'unknown'}</td>
                 `;
                 tbody.appendChild(row);
             });
