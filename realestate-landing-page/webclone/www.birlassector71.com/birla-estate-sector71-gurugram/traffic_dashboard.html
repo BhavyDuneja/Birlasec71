@@ -104,7 +104,11 @@
     <div class="container">
         <h1>🚀 Traffic Dashboard - Birla Sector 71</h1>
         
-        <button class="refresh-btn" onclick="loadTrafficData()">🔄 Refresh Data</button>
+        <div style="margin-bottom: 20px;">
+            <button class="refresh-btn" onclick="loadTrafficData()">🔄 Refresh Data</button>
+            <button class="refresh-btn" onclick="testFirebaseConnection()" style="background: #28a745;">🔍 Test Firebase</button>
+            <div id="statusMessage" style="display: inline-block; margin-left: 15px; padding: 8px 15px; border-radius: 5px; font-size: 0.9em;"></div>
+        </div>
         
         <div class="stats-grid" id="statsGrid">
             <!-- Stats will be populated here -->
@@ -144,26 +148,81 @@
         let db = null;
         let trafficUnsubscribe = null;
 
+        // Update status message
+        function updateStatus(message, color = '#666', bgColor = '#f8f9fa') {
+            const statusEl = document.getElementById('statusMessage');
+            if (statusEl) {
+                statusEl.textContent = message;
+                statusEl.style.color = color;
+                statusEl.style.backgroundColor = bgColor;
+                statusEl.style.display = 'inline-block';
+            }
+            console.log('Status:', message);
+        }
+
         // Initialize Firebase
         async function initFirebase() {
             try {
+                updateStatus('🟡 Initializing Firebase...', '#856404', '#fff3cd');
+                
+                // Wait a bit for Firebase config to load
+                if (typeof window.FirebaseConfig === 'undefined') {
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                }
+                
                 const firebaseConfig = window.FirebaseConfig;
                 if (!firebaseConfig) {
-                    throw new Error('Firebase config not found');
+                    throw new Error('Firebase config not found. Make sure firebase-config.js is loaded.');
                 }
                 
                 const initialized = await firebaseConfig.initialize();
                 if (initialized) {
                     db = firebaseConfig.getDatabase();
-                    console.log('Firebase initialized for traffic dashboard');
+                    console.log('✅ Firebase initialized for traffic dashboard');
+                    updateStatus('🟢 Firebase connected', '#155724', '#d4edda');
                     return true;
                 } else {
-                    throw new Error('Firebase initialization failed');
+                    throw new Error('Firebase initialization returned false');
                 }
             } catch (error) {
-                console.error('Firebase init error:', error);
-                // Fallback to API endpoint
+                console.error('❌ Firebase init error:', error);
+                updateStatus('🔴 Firebase error: ' + error.message, '#721c24', '#f8d7da');
                 return false;
+            }
+        }
+
+        // Test Firebase connection
+        async function testFirebaseConnection() {
+            updateStatus('🟡 Testing Firebase connection...', '#856404', '#fff3cd');
+            
+            try {
+                if (!db) {
+                    const initialized = await initFirebase();
+                    if (!initialized) {
+                        updateStatus('🔴 Firebase not initialized', '#721c24', '#f8d7da');
+                        return;
+                    }
+                }
+
+                // Test query
+                const testSnapshot = await db.collection('traffic_logs').limit(5).get();
+                const testDocs = testSnapshot.docs.map(doc => doc.data());
+                
+                console.log('Firebase test query result:', {
+                    totalDocs: testSnapshot.size,
+                    sampleDocs: testDocs
+                });
+                
+                if (testSnapshot.size > 0) {
+                    updateStatus(`🟢 Firebase working! Found ${testSnapshot.size} documents`, '#155724', '#d4edda');
+                    // Load full data
+                    loadTrafficData();
+                } else {
+                    updateStatus('🟡 Firebase connected but no data found', '#856404', '#fff3cd');
+                }
+            } catch (error) {
+                console.error('Firebase test error:', error);
+                updateStatus('🔴 Test failed: ' + error.message, '#721c24', '#f8d7da');
             }
         }
 
@@ -186,6 +245,15 @@
 
         function loadFromFirestore() {
             try {
+                if (!db) {
+                    console.error('Database not initialized');
+                    updateStatus('🔴 Database not initialized', '#721c24', '#f8d7da');
+                    loadFromAPI();
+                    return;
+                }
+
+                updateStatus('🟡 Loading data from Firestore...', '#856404', '#fff3cd');
+                
                 // Set up real-time listener
                 if (trafficUnsubscribe) {
                     trafficUnsubscribe(); // Unsubscribe from previous listener
@@ -195,10 +263,23 @@
                 trafficUnsubscribe = db.collection('traffic_logs')
                     .limit(1000)
                     .onSnapshot((snapshot) => {
+                        console.log('Firestore snapshot received:', {
+                            size: snapshot.size,
+                            empty: snapshot.empty,
+                            metadata: snapshot.metadata
+                        });
+                        
                         const logs = snapshot.docs.map(doc => ({
                             id: doc.id,
                             ...doc.data()
                         }));
+                        
+                        // Log first document for debugging
+                        if (logs.length > 0) {
+                            console.log('Sample document:', logs[0]);
+                        }
+                        
+                        console.log('Total logs fetched:', logs.length);
                         
                         // Sort by timestamp descending (client-side)
                         logs.sort((a, b) => {
@@ -211,18 +292,22 @@
                         });
                         
                         if (logs.length > 0) {
-                            console.log('Traffic logs loaded from Firestore:', logs.length, 'Sample:', logs[0]);
+                            console.log('✅ Traffic logs loaded from Firestore:', logs.length, 'Sample:', logs[0]);
+                            updateStatus(`🟢 Loaded ${logs.length} traffic logs`, '#155724', '#d4edda');
                         } else {
-                            console.log('No traffic logs found in Firestore');
+                            console.log('⚠️ No traffic logs found in Firestore');
+                            updateStatus('🟡 No data found in Firestore', '#856404', '#fff3cd');
                         }
                         displayTrafficData(logs);
                     }, (error) => {
-                        console.error('Error loading traffic logs from Firestore:', error);
+                        console.error('❌ Error loading traffic logs from Firestore:', error);
+                        updateStatus('🔴 Error: ' + error.message, '#721c24', '#f8d7da');
                         // Try fallback without orderBy
                         loadFromFirestoreFallback();
                     });
             } catch (error) {
-                console.error('Error setting up Firestore listener:', error);
+                console.error('❌ Error setting up Firestore listener:', error);
+                updateStatus('🔴 Setup error: ' + error.message, '#721c24', '#f8d7da');
                 // Fallback to API
                 loadFromAPI();
             }
@@ -231,7 +316,14 @@
         // Fallback method: fetch without real-time listener
         async function loadFromFirestoreFallback() {
             try {
+                updateStatus('🟡 Trying fallback method...', '#856404', '#fff3cd');
                 const snapshot = await db.collection('traffic_logs').limit(1000).get();
+                
+                console.log('Fallback query result:', {
+                    size: snapshot.size,
+                    empty: snapshot.empty
+                });
+                
                 const logs = snapshot.docs.map(doc => ({
                     id: doc.id,
                     ...doc.data()
@@ -246,33 +338,52 @@
                     return timeB - timeA;
                 });
                 
+                if (logs.length > 0) {
+                    console.log('✅ Traffic logs loaded from Firestore (fallback):', logs.length);
+                    updateStatus(`🟢 Loaded ${logs.length} logs (fallback)`, '#155724', '#d4edda');
+                } else {
+                    console.log('⚠️ No logs found in fallback query');
+                    updateStatus('🟡 No data found', '#856404', '#fff3cd');
+                }
+                
                 displayTrafficData(logs);
-                console.log('Traffic logs loaded from Firestore (fallback):', logs.length);
             } catch (error) {
-                console.error('Firestore fallback also failed:', error);
+                console.error('❌ Firestore fallback also failed:', error);
+                updateStatus('🔴 Fallback failed: ' + error.message, '#721c24', '#f8d7da');
                 loadFromAPI();
             }
         }
 
         function loadFromAPI() {
+            updateStatus('🟡 Trying API endpoint...', '#856404', '#fff3cd');
+            
             // Try to fetch from traffic_logger.php (GET request)
             fetch('traffic_logger.php')
                 .then(response => {
+                    // Check if response is actually JSON
+                    const contentType = response.headers.get('content-type');
+                    if (!contentType || !contentType.includes('application/json')) {
+                        throw new Error('API returned non-JSON response. Make sure the serverless function is deployed.');
+                    }
+                    
                     if (!response.ok) {
-                        throw new Error('Network response was not ok');
+                        throw new Error(`Network response was not ok: ${response.status}`);
                     }
                     return response.json();
                 })
                 .then(data => {
                     if (data.status === 'success' && data.data) {
                         // Data is in data.data array
+                        console.log('✅ Data loaded from API:', data.data.length, 'logs');
+                        updateStatus(`🟢 Loaded ${data.data.length} logs from API`, '#155724', '#d4edda');
                         displayTrafficData(data.data);
                     } else {
-                        throw new Error('No data in response');
+                        throw new Error('No data in API response');
                     }
                 })
                 .catch(error => {
-                    console.error('Error loading traffic data from API:', error);
+                    console.error('❌ Error loading traffic data from API:', error);
+                    updateStatus('🔴 API error: ' + error.message, '#721c24', '#f8d7da');
                     document.getElementById('noDataMessage').style.display = 'block';
                     document.getElementById('logTableContainer').style.display = 'none';
                 });
@@ -396,8 +507,18 @@
 
         // Initialize Firebase and load data on page load
         document.addEventListener('DOMContentLoaded', () => {
-            initFirebase().then(() => {
-                loadTrafficData();
+            console.log('Dashboard page loaded, initializing...');
+            updateStatus('🟡 Initializing...', '#856404', '#fff3cd');
+            
+            initFirebase().then((initialized) => {
+                if (initialized) {
+                    console.log('Firebase initialized, loading traffic data...');
+                    loadTrafficData();
+                } else {
+                    console.log('Firebase initialization failed, trying API fallback...');
+                    updateStatus('🟡 Trying API fallback...', '#856404', '#fff3cd');
+                    loadFromAPI();
+                }
             });
         });
 

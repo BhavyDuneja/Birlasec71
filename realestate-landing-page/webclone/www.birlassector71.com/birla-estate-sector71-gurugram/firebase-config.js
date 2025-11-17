@@ -35,7 +35,15 @@ class FirebaseConfig {
                 firebase.initializeApp(this.config);
             }
             this.db = firebase.firestore();
-            this.auth = firebase.auth();
+            
+            // Only initialize auth if the auth SDK is loaded (optional)
+            if (typeof firebase.auth === 'function') {
+                this.auth = firebase.auth();
+            } else {
+                console.log('Firebase Auth SDK not loaded, skipping auth initialization');
+                this.auth = null;
+            }
+            
             this.isInitialized = true;
             
             console.log('Firebase initialized successfully');
