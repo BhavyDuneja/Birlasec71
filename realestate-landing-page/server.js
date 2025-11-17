@@ -115,6 +115,53 @@ function handleDataCollection(req, res) {
 
 // Handle traffic logging endpoint
 function handleTrafficLogging(req, res) {
+    // Handle GET request - return the log file
+    if (req.method === 'GET') {
+        const logDir = path.join(__dirname, 'webclone', 'www.birlassector71.com', 'birla-estate-sector71-gurugram', 'logs');
+        const logFile = path.join(logDir, 'traffic_log.json');
+        
+        // Check if log file exists
+        if (fs.existsSync(logFile)) {
+            try {
+                const content = fs.readFileSync(logFile, 'utf8');
+                const logs = JSON.parse(content);
+                
+                res.writeHead(200, {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+                    'Access-Control-Allow-Headers': 'Content-Type'
+                });
+                
+                res.end(JSON.stringify({
+                    status: 'success',
+                    data: logs
+                }));
+            } catch (error) {
+                res.writeHead(500, { 
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                });
+                res.end(JSON.stringify({ status: 'error', message: error.message }));
+            }
+        } else {
+            // Return empty array if no log file exists
+            res.writeHead(200, {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+                'Access-Control-Allow-Headers': 'Content-Type'
+            });
+            
+            res.end(JSON.stringify({
+                status: 'success',
+                data: []
+            }));
+        }
+        return;
+    }
+    
+    // Handle POST request - log new traffic
     let body = '';
     
     req.on('data', chunk => {

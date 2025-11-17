@@ -130,27 +130,108 @@
         </div>
     </div>
 
+    <!-- Firebase SDK v8 -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    
+    <!-- Firebase Configuration -->
+    <script src="firebase-config.js"></script>
+    
     <script>
+        let db = null;
+        let trafficUnsubscribe = null;
+
+        // Initialize Firebase
+        async function initFirebase() {
+            try {
+                const firebaseConfig = window.FirebaseConfig;
+                if (!firebaseConfig) {
+                    throw new Error('Firebase config not found');
+                }
+                
+                const initialized = await firebaseConfig.initialize();
+                if (initialized) {
+                    db = firebaseConfig.getDatabase();
+                    console.log('Firebase initialized for traffic dashboard');
+                    return true;
+                } else {
+                    throw new Error('Firebase initialization failed');
+                }
+            } catch (error) {
+                console.error('Firebase init error:', error);
+                // Fallback to API endpoint
+                return false;
+            }
+        }
+
         function loadTrafficData() {
+            // Try Firebase first
+            if (db) {
+                loadFromFirestore();
+            } else {
+                // Initialize Firebase and try again
+                initFirebase().then(initialized => {
+                    if (initialized) {
+                        loadFromFirestore();
+                    } else {
+                        // Fallback to API endpoint
+                        loadFromAPI();
+                    }
+                });
+            }
+        }
+
+        function loadFromFirestore() {
+            try {
+                // Set up real-time listener
+                if (trafficUnsubscribe) {
+                    trafficUnsubscribe(); // Unsubscribe from previous listener
+                }
+
+                trafficUnsubscribe = db.collection('traffic_logs')
+                    .orderBy('timestamp', 'desc')
+                    .limit(1000)
+                    .onSnapshot((snapshot) => {
+                        const logs = snapshot.docs.map(doc => ({
+                            id: doc.id,
+                            ...doc.data()
+                        }));
+                        displayTrafficData(logs);
+                        console.log('Traffic logs loaded from Firestore:', logs.length);
+                    }, (error) => {
+                        console.error('Error loading traffic logs from Firestore:', error);
+                        if (error.code === 'failed-precondition') {
+                            console.warn('Firestore index required for traffic_logs');
+                        }
+                        // Fallback to API
+                        loadFromAPI();
+                    });
+            } catch (error) {
+                console.error('Error setting up Firestore listener:', error);
+                // Fallback to API
+                loadFromAPI();
+            }
+        }
+
+        function loadFromAPI() {
+            // Try to fetch from traffic_logger.php (GET request)
             fetch('traffic_logger.php')
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
                 .then(data => {
-                    if (data.status === 'success') {
-                        // Try to load the actual log file
-                        fetch('logs/traffic_log.json')
-                            .then(response => response.json())
-                            .then(logs => {
-                                displayTrafficData(logs);
-                            })
-                            .catch(error => {
-                                console.log('No log file found yet');
-                                document.getElementById('noDataMessage').style.display = 'block';
-                                document.getElementById('logTableContainer').style.display = 'none';
-                            });
+                    if (data.status === 'success' && data.data) {
+                        // Data is in data.data array
+                        displayTrafficData(data.data);
+                    } else {
+                        throw new Error('No data in response');
                     }
                 })
                 .catch(error => {
-                    console.error('Error loading traffic data:', error);
+                    console.error('Error loading traffic data from API:', error);
                     document.getElementById('noDataMessage').style.display = 'block';
                     document.getElementById('logTableContainer').style.display = 'none';
                 });
@@ -253,11 +334,19 @@
             });
         }
 
-        // Load data on page load
-        document.addEventListener('DOMContentLoaded', loadTrafficData);
+        // Initialize Firebase and load data on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            initFirebase().then(() => {
+                loadTrafficData();
+            });
+        });
 
-        // Auto-refresh every 30 seconds
-        setInterval(loadTrafficData, 30000);
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (trafficUnsubscribe) {
+                trafficUnsubscribe();
+            }
+        });
     </script>
 </body>
 </html>

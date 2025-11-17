@@ -6,7 +6,7 @@
   "rewrites": [
     {
       "source": "/traffic_logger.php",
-      "destination": "/thank-you.html"
+      "destination": "/api/traffic_logger.php"
     },
     {
       "source": "/ipcheck.php",

@@ -5,6 +5,38 @@
     // Configuration
     const TRACKING_ENDPOINT = 'traffic_logger.php';
     const SESSION_KEY = 'birla_sector71_session';
+    let db = null;
+    let firebaseInitialized = false;
+    
+    // Initialize Firebase
+    async function initFirebase() {
+        if (firebaseInitialized) return db !== null;
+        
+        try {
+            // Wait for Firebase config to be available
+            if (typeof window.FirebaseConfig === 'undefined') {
+                // Wait a bit for firebase-config.js to load
+                await new Promise(resolve => setTimeout(resolve, 500));
+                if (typeof window.FirebaseConfig === 'undefined') {
+                    return false;
+                }
+            }
+            
+            const firebaseConfig = window.FirebaseConfig;
+            const initialized = await firebaseConfig.initialize();
+            
+            if (initialized) {
+                db = firebaseConfig.getDatabase();
+                firebaseInitialized = true;
+                console.log('Traffic tracker: Firebase initialized');
+                return true;
+            }
+        } catch (error) {
+            console.log('Traffic tracker: Firebase init failed, using API fallback:', error);
+        }
+        
+        return false;
+    }
     
     // Get or create session ID
     function getSessionId() {
@@ -38,26 +70,48 @@
         return 'Unknown';
     }
     
-    // Send tracking data
-    function trackEvent(action, page = window.location.pathname) {
+    // Send tracking data to Firestore or API endpoint
+    async function trackEvent(action, page = window.location.pathname) {
         const data = {
             page: page,
             action: action,
             session_id: getSessionId(),
             device_type: getDeviceType(),
-            browser: getBrowser()
+            browser: getBrowser(),
+            timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19),
+            ip: 'unknown', // IP will be detected server-side if using API
+            user_agent: navigator.userAgent,
+            referer: document.referrer || 'direct'
         };
         
-        // Send data asynchronously
-        fetch(TRACKING_ENDPOINT, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: new URLSearchParams(data)
-        }).catch(error => {
-            console.log('Traffic tracking error:', error);
-        });
+        // Try Firestore first
+        if (db) {
+            try {
+                await db.collection('traffic_logs').add(data);
+                return; // Success, no need to try API
+            } catch (error) {
+                console.log('Traffic tracker: Firestore save failed, trying API:', error);
+            }
+        }
+        
+        // Fallback to API endpoint
+        try {
+            await fetch(TRACKING_ENDPOINT, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams({
+                    page: data.page,
+                    action: data.action,
+                    session_id: data.session_id,
+                    device_type: data.device_type,
+                    browser: data.browser
+                })
+            });
+        } catch (error) {
+            console.log('Traffic tracking error (both Firestore and API failed):', error);
+        }
     }
     
     // Track page view (exclude certain pages)
@@ -168,13 +222,16 @@
     }
     
     // Initialize tracking when DOM is ready
-    function initTracking() {
+    async function initTracking() {
         // Prevent duplicate initialization
         if (window.trafficTrackerInitialized) {
             console.log('Traffic tracker already initialized, skipping');
             return;
         }
         window.trafficTrackerInitialized = true;
+        
+        // Initialize Firebase first
+        await initFirebase();
         
         // Track initial page view (only if data-collector hasn't already tracked it)
         // Add a small delay to avoid duplicate tracking with data-collector
